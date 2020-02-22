@@ -1,0 +1,16 @@
+name: MinecraftDay
+version: 1.0-SNAPSHOT
+main: jp.minecraftday.minecraftinstrumentality.Main
+api-version: 1.13
+
+commands:
+  minecraftday:
+    description: マイクラデイサーバーセッティング
+    usage: /<command>
+    permission: minecraftday
+    permission-message: You don't have <permission>
+  mg:
+    description: ミニゲームタイマー
+    usage: /<command>
+    permission: minecraftday.mg
+    permission-message: You don't have <permission>
