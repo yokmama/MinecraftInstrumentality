@@ -18,7 +18,9 @@ public class MainCommandExecutor implements CommandExecutor {
             plugin.saveConfig();
         }
         if (!plugin.getConfig().isSet("welcome.message")) {
-            plugin.getConfig().set("welcome.message", "Welcome to the MinecraftDay Server!");
+            StringBuilder builder = new StringBuilder();
+            builder.append("[").append("{\"text\":\"").append("Welcome to the MinecraftDay Server!").append("\"}]");
+            plugin.getConfig().set("welcome.message", builder.toString());
             plugin.saveConfig();
         }
 

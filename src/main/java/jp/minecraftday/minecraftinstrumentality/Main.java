@@ -9,6 +9,7 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.List;
 
 public final class Main extends JavaPlugin implements Listener {
@@ -17,11 +18,14 @@ public final class Main extends JavaPlugin implements Listener {
     public void onEnable() {
         super.onEnable();
 
-        saveDefaultConfig();
+//        if(!getDataFolder().exists())
+//            getDataFolder().mkdirs();
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("md").setExecutor(new MainCommandExecutor(this));
         getCommand("mg").setExecutor(new GameCommandExecutor(this));
+
+        saveDefaultConfig();
     }
 
     @Override
