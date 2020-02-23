@@ -20,7 +20,7 @@ public final class Main extends JavaPlugin implements Listener {
         saveDefaultConfig();
 
         getServer().getPluginManager().registerEvents(this, this);
-        getCommand("minecraftday").setExecutor(new MainCommandExecutor(this));
+        getCommand("md").setExecutor(new MainCommandExecutor(this));
         getCommand("mg").setExecutor(new GameCommandExecutor(this));
     }
 
@@ -32,18 +32,21 @@ public final class Main extends JavaPlugin implements Listener {
     @EventHandler
     public void onLogin(PlayerJoinEvent event) {
         String msg = getConfig().getString("welcome.message");
-        if(msg == null) msg = "";
+        if (msg == null) msg = "";
 
-        msg = ChatColor.translateAlternateColorCodes('&', msg);
+        StringBuilder buf = new StringBuilder();
+        buf.append("tellraw ").append(event.getPlayer().getName()).append(" ").append(msg);
+        event.getPlayer().performCommand(buf.toString());
 
-        event.getPlayer().sendMessage(msg);
+        //msg = ChatColor.translateAlternateColorCodes('&', msg);
+        //event.getPlayer().sendMessage(msg);
 
     }
 
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {
         List<String> worlds = getConfig().getStringList("tntcanceller.worlds");
-        worlds.forEach( name -> {
+        worlds.forEach(name -> {
             if (event.getLocation().getWorld().getName().equals(name)) {
                 event.setCancelled(true);
             }

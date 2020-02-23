@@ -4,13 +4,26 @@ main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
 
 commands:
-  minecraftday:
+  md:
     description: マイクラデイサーバーセッティング
-    usage: /<command>
+    usage: /minecraftday <welcome>
     permission: minecraftday
     permission-message: You don't have <permission>
+  md welcome:
+    description: マイクラデイサーバーセッティング
+    permission: minecraftday.welcome
+    usage: /md welcome [メッセージ]
   mg:
-    description: ミニゲームタイマー
-    usage: /<command>
+    description: ミニゲーム
+    usage: /minigame <set/start/cancel>
     permission: minecraftday.mg
     permission-message: You don't have <permission>
+  mg set:
+    description: ミニゲーム設定
+    usage: /mg set [プレイヤー名1] [プレイヤー名2] ...
+  mg start:
+    description: ミニゲームスタート
+    usage: /mg start <分>
+  mg cancel:
+    description: ミニゲームキャンセル
+    usage: /mg cancel
