@@ -65,15 +65,21 @@ public class GameCommandExecutor implements CommandExecutor {
             return;
         }
 
-        List<Player> players_list = new ArrayList<>();
+        List<String> players_list = new ArrayList<>();
         for (String name :players){
             if(checkJoiningOtherGame(gameMaker, name)){
                 hostplayer.sendMessage(name+"さんが他のゲームに参加しています");
                 return;
             }
 
-            Player targetplayer = Bukkit.getServer().getPlayer(name);
-            players_list.add(targetplayer);
+            Player targetplayer = findPlayer(name);
+            if(targetplayer!=null) {
+                players_list.add(name);
+            }
+        }
+        if(players_list.size() == 0){
+            hostplayer.sendMessage("参加できるプレイヤーが一人もいません");
+            return;
         }
 
         gameMaker = new GameMaker(hostplayer, players_list);
@@ -98,7 +104,7 @@ public class GameCommandExecutor implements CommandExecutor {
             }
             gameMaker.start(pool, time);
         }else{
-            player.sendMessage("/game init 参加プレイヤー名・・・");
+            player.sendMessage("/game set 参加プレイヤー名・・・");
         }
     }
 
@@ -119,17 +125,21 @@ public class GameCommandExecutor implements CommandExecutor {
         return false;
     }
 
+    private Player findPlayer(String name){
+        return Bukkit.getPlayerExact(name);
+    }
+
     public class GameMaker implements Runnable{
-        final Player hostplayer;
-        final List<Player> players;
+        final String hostplayer;
+        final List<String> players;
         Future future;
         boolean cancel = false;
         long startedTime;
         int time;
         Location location;
 
-        public GameMaker(Player hostplayer, List<Player> players_list) {
-            this.hostplayer = hostplayer;
+        public GameMaker(Player hostplayer, List<String> players_list) {
+            this.hostplayer = hostplayer.getName();
             this.players = players_list;
             this.location = new Location(
                     hostplayer.getLocation().getWorld(),
@@ -138,15 +148,15 @@ public class GameCommandExecutor implements CommandExecutor {
                     hostplayer.getLocation().getZ());
         }
 
-        Player getHostplayer(){ return hostplayer;}
+        String getHostplayer(){ return hostplayer;}
 
         boolean isInGame(){ return future!=null; }
 
         boolean isJoining(String name){
-            for (Player p: players) {
-                if(p.getName().equals(name)) return true;
+            for (String p: players) {
+                if(p.equals(name)) return true;
             }
-            if(hostplayer.getName().equals(name)) return true;
+            if(hostplayer.equals(name)) return true;
             return false;
         }
 
@@ -167,25 +177,33 @@ public class GameCommandExecutor implements CommandExecutor {
 
         public void end(){
             showTitle("ゲーム終了");
-            for(Player p : players)
+            for(String p : players)
                 Threading.postToServerThread(new Threading.Task(plugin) {
                     @Override
                     public void execute() {
-                        p.teleport(location);
+                        Player player = findPlayer(p);
+                        if(player!=null) {
+                            player.teleport(location);
+                        }
                     }
                 });
         }
 
         void showTitle(String msg){
-            for(Player p : players){
-                titleSender.sendTitle(p,msg,"", "");
+            for(String p : players){
+                Player player = findPlayer(p);
+                if(player!=null) {
+                    titleSender.sendTitle(player, msg, "", "");
+                }
             }
         }
 
         void broadcastMessage(String msg){
-            for(Player p : players){
-                //titleSender.sendTitle(p,msg,"", "");
-                p.sendMessage("<Bot> "+msg);
+            for(String p : players){
+                Player player = findPlayer(p);
+                if(player!=null) {
+                    player.sendMessage("<Bot> " + msg);
+                }
             }
         }
 
@@ -200,7 +218,7 @@ public class GameCommandExecutor implements CommandExecutor {
                     if(distance>=TIME_SPAN){
                         //終了処理
                         end();
-                        games.remove(hostplayer.getName());
+                        games.remove(hostplayer);
                         break;
                     }
 
@@ -229,7 +247,7 @@ public class GameCommandExecutor implements CommandExecutor {
                             if(t == 0){
                                 //終了処理
                                 end();
-                                games.remove(hostplayer.getName());
+                                games.remove(hostplayer);
                                 break;
                             }else{
                                 //メッセージ
