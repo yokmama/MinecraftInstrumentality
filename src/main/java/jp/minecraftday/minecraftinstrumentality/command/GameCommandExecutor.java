@@ -2,6 +2,7 @@ package jp.minecraftday.minecraftinstrumentality.command;
 
 import jp.minecraftday.minecraftinstrumentality.Main;
 import jp.minecraftday.minecraftinstrumentality.Threading;
+import jp.minecraftday.minecraftinstrumentality.utils.TitleSender;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -9,6 +10,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.PluginLogger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,19 +18,23 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class GameCommandExecutor implements CommandExecutor {
+    private static final Logger logger = Logger.getLogger("minecraftday");
     final Main plugin;
     static AtomicInteger ids = new AtomicInteger();
     final ExecutorService pool;
     static Map<String, GameMaker> games = new ConcurrentHashMap<>();
+    TitleSender titleSender = new TitleSender();;
 
 
     public GameCommandExecutor(Main ref) {
         plugin = ref;
 
         pool = Executors.newCachedThreadPool(runnable -> {
-            Thread thread = new Thread(runnable, "MinecraftDay Game Execution Thread " + ids.incrementAndGet());
+            Thread thread = new Thread(runnable, "MinecraftDay Thread " + ids.incrementAndGet());
             thread.setDaemon(true);
             return thread;
         });
@@ -60,22 +66,19 @@ public class GameCommandExecutor implements CommandExecutor {
         }
 
         List<Player> players_list = new ArrayList<>();
-        players_list.add(hostplayer);
         for (String name :players){
-            if(!hostplayer.getName().equals(name)) {
-                if(checkJoiningOtherGame(gameMaker, name)){
-                    hostplayer.sendMessage(name+"さんが他のゲームに参加しています");
-                    return;
-                }
-
-                Player targetplayer = Bukkit.getServer().getPlayer(name);
-                players_list.add(targetplayer);
+            if(checkJoiningOtherGame(gameMaker, name)){
+                hostplayer.sendMessage(name+"さんが他のゲームに参加しています");
+                return;
             }
+
+            Player targetplayer = Bukkit.getServer().getPlayer(name);
+            players_list.add(targetplayer);
         }
 
         gameMaker = new GameMaker(hostplayer, players_list);
         games.put(hostplayer.getName(), gameMaker);
-        gameMaker.broadcast("ゲームの準備はいいですか？");
+        gameMaker.showTitle("ゲームの準備はいい？");
     }
 
     private void startGame(Player player, String[] cmds) {
@@ -143,6 +146,7 @@ public class GameCommandExecutor implements CommandExecutor {
             for (Player p: players) {
                 if(p.getName().equals(name)) return true;
             }
+            if(hostplayer.getName().equals(name)) return true;
             return false;
         }
 
@@ -158,11 +162,11 @@ public class GameCommandExecutor implements CommandExecutor {
         public void start(ExecutorService pool, int time) {
             this.time = time;
             this.future = pool.submit(this);
-            broadcast("ゲームスタート！");
+            showTitle("ゲームスタート！");
         }
 
         public void end(){
-            broadcast("ゲーム終了");
+            showTitle("ゲーム終了");
             for(Player p : players)
                 Threading.postToServerThread(new Threading.Task(plugin) {
                     @Override
@@ -172,18 +176,24 @@ public class GameCommandExecutor implements CommandExecutor {
                 });
         }
 
-        void broadcast(String msg){
+        void showTitle(String msg){
             for(Player p : players){
-                p.sendMessage(msg);
-                System.out.println(msg);
+                titleSender.sendTitle(p,msg,"", "");
+            }
+        }
+
+        void broadcastMessage(String msg){
+            for(Player p : players){
+                //titleSender.sendTitle(p,msg,"", "");
+                p.sendMessage("<Bot> "+msg);
             }
         }
 
         @Override
         public void run() {
-            System.out.println("######################## start");
             startedTime = Calendar.getInstance().getTime().getTime();
             long TIME_SPAN = time*60*1000;
+            long harfTime = new Double(Math.ceil(time/2.0)).longValue();
             try {
                 while(!pool.isShutdown()){
                     long distance = Calendar.getInstance().getTime().getTime() - startedTime;
@@ -195,23 +205,24 @@ public class GameCommandExecutor implements CommandExecutor {
                     }
 
                     long m = new Double(Math.ceil(distance/(60*1000))).longValue();
+                    long lm = time - m;
                     long s = (distance - m*(60*1000))/1000;
-                    System.out.println(m + "分"+ s+"秒経過");
 
-                    if(m == time/2 && s == 0){
+                    //logger.info(lm + ":"+ s + "("+harfTime+")");
+                    if(lm == harfTime && s == 0){
                         //半分経過
-                        broadcast("残り"+m+"分です");
+                        broadcastMessage("残り"+lm+"分です");
                     }else if( m == (time-1)){
                         //残り一分以内
                         if(s == 0){
                             //残り1分
-                            broadcast("残り1分です");
+                            broadcastMessage("残り1分です");
                         }else if ( s == 30){
                             //残り30秒
-                            broadcast("残り30秒です");
+                            broadcastMessage("残り30秒です");
                         }else if ( s == 45){
                             //残り15秒
-                            broadcast("残り15秒です");
+                            broadcastMessage("残り15秒です");
                         }else if ( s >= 50){
                             //残り10秒カウントダウン
                             long t = 60 - s;
@@ -222,7 +233,7 @@ public class GameCommandExecutor implements CommandExecutor {
                                 break;
                             }else{
                                 //メッセージ
-                                broadcast(Long.toString(t));
+                                broadcastMessage(Long.toString(t));
                             }
                         }
                     }
@@ -232,10 +243,9 @@ public class GameCommandExecutor implements CommandExecutor {
 
                 }
             } catch (InterruptedException e) {
-                System.out.println("Interrupted - "
+                logger.info("Interrupted - "
                         + Thread.currentThread().getId());
             }
-            System.out.println("######################## end");
         }
     }
 
