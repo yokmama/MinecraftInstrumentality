@@ -6,26 +6,30 @@ api-version: 1.13
 commands:
   md:
     description: マイクラデイサーバーセッティング
-    usage: /md <welcome>
+    usage: /md welcome
     permission: minecraftday.md
     permission-message: You don't have <permission>
   md welcome:
     description: ログインメッセージを設定
     permission: minecraftday.md.welcome
-    usage: /md welcome [メッセージ]
+    usage: /md welcome メッセージ
   mg:
     description: ミニゲーム
-    usage: /mg <set/start/cancel>
+    usage: /mg set/start/cancel
     permission: minecraftday.mg
     permission-message: You don't have <permission>
   mg set:
-    description: 参加者設定
+    description: ゲームの設定
     permission: minecraftday.mg
-    usage: /mg set [プレイヤー名1] [プレイヤー名2] ...
+    usage: /mg set 分 [ゲーム名]
   mg start:
     description: ゲームスタート
     permission: minecraftday.mg
-    usage: /mg start <分>
+    usage: /mg start
+  mg list:
+    description: ゲームの参加者を表示
+    permission: minecraftday.mg
+    usage: /mg list
   mg cancel:
     description: ゲームキャンセル
     permission: minecraftday.mg

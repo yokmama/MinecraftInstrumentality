@@ -46,8 +46,11 @@ public class GameCommandExecutor implements CommandExecutor {
             if (cmd0.equals("set")) {
                 initGame((Player)sender, Arrays.copyOfRange(args, 1, args.length));
             }
+            else if(cmd0.equals("list")) {
+                listPlayer((Player)sender);
+            }
             else if(cmd0.equals("start")) {
-                startGame((Player)sender, Arrays.copyOfRange(args, 1, args.length));
+                startGame((Player)sender);
             }
             else if(cmd0.equals("cancel")){
                 cancelGame((Player)sender);
@@ -58,53 +61,75 @@ public class GameCommandExecutor implements CommandExecutor {
         return false;
     }
 
-    private void initGame(Player hostplayer, String[] players){
+    private void initGame(Player hostplayer, String[] cmds){
         GameMaker gameMaker = games.get(hostplayer.getName());
         if(gameMaker != null && gameMaker.isInGame()){
             hostplayer.sendMessage("すでにゲームがスタートしています。一度キャンセルしましょう");
             return;
         }
 
+        int time = 0;
         List<String> players_list = new ArrayList<>();
-        for (String name :players){
+        gameMaker = new GameMaker(hostplayer, players_list);
+
+        if (cmds.length > 0) {
+            try {
+                time = Integer.parseInt(cmds[0]);
+            } catch (Exception e) {
+                hostplayer.sendMessage("ゲーム時間は数字でいれてください");
+                return;
+            }
+            gameMaker.setTime(time);
+            if (cmds.length > 1) {
+                StringBuffer msg = new StringBuffer();
+                for (int i = 1; i < cmds.length; i++) {
+                    String s = cmds[i];
+                    if (msg.length() > 0) msg.append(" ");
+                    msg.append(s);
+                }
+                gameMaker.setTitlte(msg.toString());
+            }
+        } else {
+            hostplayer.sendMessage("mg set 分 [ゲーム名]");
+            return;
+        }
+
+        hostplayer.getWorld().getPlayers().forEach(player -> {
+            if(player.getLocation().distance(hostplayer.getLocation()) < 3){
+                if(!players_list.contains(player.getName()))
+                    players_list.add(player.getName());
+            }
+        });
+        players_list.add(hostplayer.getName());
+
+        for (String name :players_list){
             if(checkJoiningOtherGame(gameMaker, name)){
                 hostplayer.sendMessage(name+"さんが他のゲームに参加しています");
                 return;
             }
-
-            Player targetplayer = findPlayer(name);
-            if(targetplayer!=null) {
-                players_list.add(name);
-            }
-        }
-        if(players_list.size() == 0){
-            hostplayer.sendMessage("参加できるプレイヤーが一人もいません");
-            return;
         }
 
-        gameMaker = new GameMaker(hostplayer, players_list);
         games.put(hostplayer.getName(), gameMaker);
-        gameMaker.showTitle("ゲームの準備はいい？");
+        gameMaker.showTitle("ゲームの準備はいい？", "");
     }
 
-    private void startGame(Player player, String[] cmds) {
+    private void listPlayer(Player player){
+        Optional<GameMaker> game = games.values().stream().filter(g->g.isJoining(player.getName())).findFirst();
+        if(game.isPresent()){
+            StringBuilder builder = new StringBuilder();
+            builder.append("参加者: ");
+            game.get().players.forEach(p->builder.append(" ").append(p));
+
+            player.sendMessage(builder.toString());
+        }
+    }
+
+    private void startGame(Player player) {
         GameMaker gameMaker = games.get(player.getName());
         if(gameMaker!=null) {
-            int time = 0;
-            if (cmds.length > 0) {
-                try {
-                    time = Integer.parseInt(cmds[0]);
-                } catch (Exception e) {
-                    player.sendMessage("ゲーム時間は数字でいれてください");
-                    return;
-                }
-            } else {
-                player.sendMessage("/game start <ゲーム時間>");
-                return;
-            }
-            gameMaker.start(pool, time);
+            gameMaker.start(pool);
         }else{
-            player.sendMessage("/game set 参加プレイヤー名・・・");
+            player.sendMessage("ゲームの設定がされていません");
         }
     }
 
@@ -120,7 +145,7 @@ public class GameCommandExecutor implements CommandExecutor {
 
     private boolean checkJoiningOtherGame(GameMaker gameMaker, String s){
         for(GameMaker g : games.values()){
-            if((gameMaker == null || gameMaker!= g) && g.isJoining(s)) return true;
+            if((gameMaker == null || !gameMaker.getHostplayer().equals(g.getHostplayer())) && g.isJoining(s)) return true;
         }
         return false;
     }
@@ -135,6 +160,7 @@ public class GameCommandExecutor implements CommandExecutor {
         Future future;
         boolean cancel = false;
         long startedTime;
+        String title;
         int time;
         Location location;
 
@@ -160,6 +186,14 @@ public class GameCommandExecutor implements CommandExecutor {
             return false;
         }
 
+        void setTime(int t){
+            this.time = t;
+        }
+
+        void setTitlte(String s){
+            this.title = s;
+        }
+
         public void setCancel() {
             if(future!=null) {
                 future.cancel(true);
@@ -169,14 +203,13 @@ public class GameCommandExecutor implements CommandExecutor {
         }
 
 
-        public void start(ExecutorService pool, int time) {
-            this.time = time;
+        public void start(ExecutorService pool) {
             this.future = pool.submit(this);
-            showTitle("ゲームスタート！");
+            showTitle("ゲームスタート！", title);
         }
 
         public void end(){
-            showTitle("ゲーム終了");
+            showTitle("ゲーム終了", "");
             for(String p : players)
                 Threading.postToServerThread(new Threading.Task(plugin) {
                     @Override
@@ -189,11 +222,11 @@ public class GameCommandExecutor implements CommandExecutor {
                 });
         }
 
-        void showTitle(String msg){
+        void showTitle(String title, String subtitle){
             for(String p : players){
                 Player player = findPlayer(p);
                 if(player!=null) {
-                    titleSender.sendTitle(player, msg, "", "");
+                    titleSender.sendTitle(player, title, subtitle, "");
                 }
             }
         }
