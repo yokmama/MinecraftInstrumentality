@@ -1,33 +1,29 @@
 package jp.minecraftday.minecraftinstrumentality.command;
 
+import jp.minecraftday.minecraftinstrumentality.GameMaker;
+import jp.minecraftday.minecraftinstrumentality.PlayerEventListner;
 import jp.minecraftday.minecraftinstrumentality.Main;
-import jp.minecraftday.minecraftinstrumentality.Threading;
 import jp.minecraftday.minecraftinstrumentality.utils.TitleSender;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.PluginLogger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class GameCommandExecutor implements CommandExecutor {
-    private static final Logger logger = Logger.getLogger("minecraftday");
+public class GameCommandExecutor implements CommandExecutor, PlayerEventListner {
     final Main plugin;
     static AtomicInteger ids = new AtomicInteger();
+    static AtomicInteger counter = new AtomicInteger();
     final ExecutorService pool;
-    static Map<String, GameMaker> games = new ConcurrentHashMap<>();
-    TitleSender titleSender = new TitleSender();;
+    static Map<Integer, GameMaker> games = new ConcurrentHashMap<>();
+    static Map<String, Integer> playerIDs = new ConcurrentHashMap<>();
 
 
     public GameCommandExecutor(Main ref) {
@@ -40,20 +36,50 @@ public class GameCommandExecutor implements CommandExecutor {
         });
     }
 
+    public boolean isShutdown(){
+        return pool.isShutdown();
+    }
+
+    private GameMaker getGameMaker(Player player) {
+        Integer playerID = playerIDs.get(player.getName());
+        if (playerID == null) return null;
+        return games.get(playerID);
+    }
+
+    private Integer incrementAndGetPlayerID(Player player) {
+        Integer playerID = playerIDs.get(player.getName());
+        if (playerID == null) {
+            playerID = counter.incrementAndGet();
+            playerIDs.put(player.getName(), playerID);
+        }
+        return playerID;
+    }
+
+    public void remove(String playerName){
+        Integer playerID = playerIDs.get(playerName);
+        games.remove(playerID);
+    }
+
+
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("mg") && args.length > 0 && sender instanceof Player) {
             String cmd0 = args[0].toLowerCase();
             if (cmd0.equals("set")) {
-                initGame((Player)sender, Arrays.copyOfRange(args, 1, args.length));
-            }
-            else if(cmd0.equals("list")) {
-                listPlayer((Player)sender);
-            }
-            else if(cmd0.equals("start")) {
-                startGame((Player)sender);
-            }
-            else if(cmd0.equals("cancel")){
-                cancelGame((Player)sender);
+                initGame((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+            } else if (cmd0.equals("join")) {
+                joinGame((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+            } else if (cmd0.equals("finish")) {
+                finishGame((Player) sender);
+            } else if (cmd0.equals("invite")) {
+                invitePlayer((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+            } else if (cmd0.equals("list")) {
+                listPlayer((Player) sender);
+            } else if (cmd0.equals("start")) {
+                startGame((Player) sender);
+            } else if (cmd0.equals("gather")) {
+                gatherPlayer((Player) sender);
+            } else if (cmd0.equals("cancel")) {
+                cancelGame((Player) sender);
             }
 
             return true;
@@ -61,16 +87,19 @@ public class GameCommandExecutor implements CommandExecutor {
         return false;
     }
 
-    private void initGame(Player hostplayer, String[] cmds){
-        GameMaker gameMaker = games.get(hostplayer.getName());
-        if(gameMaker != null && gameMaker.isInGame()){
+    private void initGame(Player hostplayer, String[] cmds) {
+        final Integer playerID = incrementAndGetPlayerID(hostplayer);
+
+        GameMaker gameMaker = games.get(playerID);
+        if (gameMaker != null && gameMaker.isInGame()) {
             hostplayer.sendMessage("すでにゲームがスタートしています。一度キャンセルしましょう");
             return;
+        }else if( gameMaker == null){
+            gameMaker = new GameMaker(this, hostplayer);
         }
 
-        int time = 0;
-        List<String> players_list = new ArrayList<>();
-        gameMaker = new GameMaker(hostplayer, players_list);
+        int time;
+
 
         if (cmds.length > 0) {
             try {
@@ -79,225 +108,168 @@ public class GameCommandExecutor implements CommandExecutor {
                 hostplayer.sendMessage("ゲーム時間は数字でいれてください");
                 return;
             }
-            gameMaker.setTime(time);
-            if (cmds.length > 1) {
-                StringBuffer msg = new StringBuffer();
-                for (int i = 1; i < cmds.length; i++) {
-                    String s = cmds[i];
-                    if (msg.length() > 0) msg.append(" ");
-                    msg.append(s);
-                }
-                gameMaker.setTitlte(msg.toString());
-            }
         } else {
-            hostplayer.sendMessage("mg set 分 [ゲーム名]");
+            hostplayer.sendMessage("mg set 分");
             return;
         }
 
+        gameMaker.setTime(time);
+
+        final GameMaker gm = gameMaker;
         hostplayer.getWorld().getPlayers().forEach(player -> {
-            if(player.getLocation().distance(hostplayer.getLocation()) < 3){
-                if(!players_list.contains(player.getName()))
-                    players_list.add(player.getName());
+            if (player.getLocation().distance(hostplayer.getLocation()) < 20) {
+                sendInviteMessage(gm, player);
             }
         });
-        players_list.add(hostplayer.getName());
 
-        for (String name :players_list){
-            if(checkJoiningOtherGame(gameMaker, name)){
-                hostplayer.sendMessage(name+"さんが他のゲームに参加しています");
-                return;
-            }
-        }
-
-        games.put(hostplayer.getName(), gameMaker);
-        gameMaker.showTitle("ゲームの準備はいい？", "");
+        games.put(playerID, gameMaker);
     }
 
-    private void listPlayer(Player player){
-        Optional<GameMaker> game = games.values().stream().filter(g->g.isJoining(player.getName())).findFirst();
-        if(game.isPresent()){
-            StringBuilder builder = new StringBuilder();
-            builder.append("参加者: ");
-            game.get().players.forEach(p->builder.append(" ").append(p));
+    private void joinGame(Player player, String[] cmds) {
+        if(cmds.length == 0){
+            player.sendMessage("ゲーム番号をいれてください");
+        }
 
-            player.sendMessage(builder.toString());
+        int gameID = -1;
+        try {
+            gameID = Integer.parseInt(cmds[0]);
+        } catch (Exception e) {
+            player.sendMessage("ゲーム番号は数字でいれてください");
+            return;
+        }
+
+        GameMaker gameMaker = games.get(gameID);
+        if (gameMaker == null || gameMaker.isInGame()) {
+            player.sendMessage("指定されたゲームがないから、すでにスタートしているゲームです");
+            return;
+        }
+
+        GameMaker hostingGame = getGameMaker(player);
+        if (hostingGame!=null && !hostingGame.getHostplayer().equals(gameMaker.getHostplayer())) {
+            player.sendMessage("ゲームの作成者は他のゲームには参加できません");
+            return;
+        }
+
+
+        GameMaker ogm = getJoiningGame(player.getName());
+        if(ogm!=null){
+            ogm.removePlayer(player);
+        }
+
+        gameMaker.addPlayer(player);
+
+        gameMaker.sendMessage(gameMaker.getHostplayer(), player.getName()+"がゲームに参加しました");
+        gameMaker.sendMessage(player.getName(), "ゲームに参加しました");
+
+    }
+
+    private void invitePlayer(Player player, String[] cmds) {
+        if(cmds.length == 0){
+            player.sendMessage("プレイヤー名をいれてください");
+        }
+
+        GameMaker gameMaker = getJoiningGame(player.getName());
+        if(gameMaker == null){
+            gameMaker = getGameMaker(player);
+        }
+
+        if(gameMaker == null){
+            player.sendMessage("ゲームに参加していないため招待できません");
+            return;
+        }
+
+        for(String playerName: cmds){
+            Player invitePlayer = Bukkit.getPlayerExact(playerName);
+            if (invitePlayer != null) {
+                sendInviteMessage(gameMaker, invitePlayer);
+            }
+        }
+    }
+
+    private void sendInviteMessage(GameMaker gameMaker, Player player){
+        StringBuilder msg = new StringBuilder();
+        msg.append(gameMaker.getHostplayer());
+        msg.append("さんのゲームに参加しますか？ 参加するなら /mg join ");
+        msg.append(playerIDs.get(gameMaker.getHostplayer()));
+        gameMaker.sendMessage(player.getName(), msg.toString());
+    }
+
+    private void finishGame(Player player){
+        Optional<GameMaker> game = games.values().stream().filter(g -> g.isJoining(player.getName())).findFirst();
+        if (game.isPresent()) {
+            game.get().removePlayer(player);
+            game.get().sendMessage(player.getName(),"ゲームを終了しました");
+            game.get().sendMessage(game.get().getHostplayer(), player.getName()+"がゲームから抜けました");
+        }else{
+            player.sendMessage("参加しているゲームがありません");
+        }
+    }
+
+    private void listPlayer(Player player) {
+        Optional<GameMaker> game = games.values().stream().filter(g -> g.isJoining(player.getName())).findFirst();
+        if (game.isPresent()) {
+            StringBuilder builder = new StringBuilder();
+            game.get().getPlayers().forEach(p -> builder.append(" ").append(p));
+
+            game.get().sendMessage(player.getName(), builder.toString());
+        }else{
+            player.sendMessage("参加しているゲームがありません");
         }
     }
 
     private void startGame(Player player) {
-        GameMaker gameMaker = games.get(player.getName());
-        if(gameMaker!=null) {
+        GameMaker gameMaker = getGameMaker(player);
+        if (gameMaker != null) {
             gameMaker.start(pool);
+        } else {
+            player.sendMessage("あなたはゲームの作成者ではありません");
+        }
+    }
+
+    private void gatherPlayer(Player player){
+        GameMaker gameMaker = getGameMaker(player);
+        if (gameMaker != null) {
+            gameMaker.gather();
+        } else {
+            player.sendMessage("ゲームがありません");
+        }
+    }
+
+    private void cancelGame(Player player) {
+        GameMaker gameMaker = getGameMaker(player);
+        if (gameMaker != null) {
+            gameMaker.cancel();
+            remove(player.getName());
         }else{
-            player.sendMessage("ゲームの設定がされていません");
+            player.sendMessage("あなたはゲーム作成者ではありません");
         }
     }
 
-    private void cancelGame(Player player){
-        GameMaker gameMaker = games.get(player.getName());
-        if(gameMaker != null) {
-            if(gameMaker.isInGame()){
-                gameMaker.setCancel();
-            }
-            games.remove(player.getName());
+    private GameMaker getJoiningGame(String player) {
+        for (GameMaker g : games.values()) {
+            if (g.isJoining(player))
+                return g;
         }
+        return null;
     }
 
-    private boolean checkJoiningOtherGame(GameMaker gameMaker, String s){
-        for(GameMaker g : games.values()){
-            if((gameMaker == null || !gameMaker.getHostplayer().equals(g.getHostplayer())) && g.isJoining(s)) return true;
+    @Override
+    public void onLogin(Player player) {
+        GameMaker gameMaker = getJoiningGame(player.getName());
+        if(gameMaker!=null){
+            player.setScoreboard(gameMaker.getScoreboard());
+        } else {
+            gameMaker = getGameMaker(player);
+            if(gameMaker!=null){
+                player.setScoreboard(gameMaker.getScoreboard());
+            }
         }
-        return false;
+
     }
 
-    private Player findPlayer(String name){
-        return Bukkit.getPlayerExact(name);
-    }
+    @Override
+    public void onLogout(Player player) {
 
-    public class GameMaker implements Runnable{
-        final String hostplayer;
-        final List<String> players;
-        Future future;
-        boolean cancel = false;
-        long startedTime;
-        String title;
-        int time;
-        Location location;
-
-        public GameMaker(Player hostplayer, List<String> players_list) {
-            this.hostplayer = hostplayer.getName();
-            this.players = players_list;
-            this.location = new Location(
-                    hostplayer.getLocation().getWorld(),
-                    hostplayer.getLocation().getX(),
-                    hostplayer.getLocation().getY(),
-                    hostplayer.getLocation().getZ());
-        }
-
-        String getHostplayer(){ return hostplayer;}
-
-        boolean isInGame(){ return future!=null; }
-
-        boolean isJoining(String name){
-            for (String p: players) {
-                if(p.equals(name)) return true;
-            }
-            if(hostplayer.equals(name)) return true;
-            return false;
-        }
-
-        void setTime(int t){
-            this.time = t;
-        }
-
-        void setTitlte(String s){
-            this.title = s;
-        }
-
-        public void setCancel() {
-            if(future!=null) {
-                future.cancel(true);
-                future = null;
-            }
-            cancel = true;
-        }
-
-
-        public void start(ExecutorService pool) {
-            this.future = pool.submit(this);
-            showTitle("ゲームスタート！", title);
-        }
-
-        public void end(){
-            showTitle("ゲーム終了", "");
-            for(String p : players)
-                Threading.postToServerThread(new Threading.Task(plugin) {
-                    @Override
-                    public void execute() {
-                        Player player = findPlayer(p);
-                        if(player!=null) {
-                            player.teleport(location);
-                        }
-                    }
-                });
-        }
-
-        void showTitle(String title, String subtitle){
-            for(String p : players){
-                Player player = findPlayer(p);
-                if(player!=null) {
-                    titleSender.sendTitle(player, title, subtitle, "");
-                }
-            }
-        }
-
-        void broadcastMessage(String msg){
-            for(String p : players){
-                Player player = findPlayer(p);
-                if(player!=null) {
-                    player.sendMessage("<Bot> " + msg);
-                }
-            }
-        }
-
-        @Override
-        public void run() {
-            startedTime = Calendar.getInstance().getTime().getTime();
-            long TIME_SPAN = time*60*1000;
-            long harfTime = new Double(Math.ceil(time/2.0)).longValue();
-            try {
-                while(!pool.isShutdown()){
-                    long distance = Calendar.getInstance().getTime().getTime() - startedTime;
-                    if(distance>=TIME_SPAN){
-                        //終了処理
-                        end();
-                        games.remove(hostplayer);
-                        break;
-                    }
-
-                    long m = new Double(Math.ceil(distance/(60*1000))).longValue();
-                    long lm = time - m;
-                    long s = (distance - m*(60*1000))/1000;
-
-                    //logger.info(lm + ":"+ s + "("+harfTime+")");
-                    if(lm == harfTime && s == 0){
-                        //半分経過
-                        broadcastMessage("残り"+lm+"分です");
-                    }else if( m == (time-1)){
-                        //残り一分以内
-                        if(s == 0){
-                            //残り1分
-                            broadcastMessage("残り1分です");
-                        }else if ( s == 30){
-                            //残り30秒
-                            broadcastMessage("残り30秒です");
-                        }else if ( s == 45){
-                            //残り15秒
-                            broadcastMessage("残り15秒です");
-                        }else if ( s >= 50){
-                            //残り10秒カウントダウン
-                            long t = 60 - s;
-                            if(t == 0){
-                                //終了処理
-                                end();
-                                games.remove(hostplayer);
-                                break;
-                            }else{
-                                //メッセージ
-                                broadcastMessage(Long.toString(t));
-                            }
-                        }
-                    }
-
-
-                    Thread.sleep(1000);
-
-                }
-            } catch (InterruptedException e) {
-                logger.info("Interrupted - "
-                        + Thread.currentThread().getId());
-            }
-        }
     }
 
 }

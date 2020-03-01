@@ -2,28 +2,27 @@ package jp.minecraftday.minecraftinstrumentality;
 
 import jp.minecraftday.minecraftinstrumentality.command.GameCommandExecutor;
 import jp.minecraftday.minecraftinstrumentality.command.MainCommandExecutor;
-import org.bukkit.ChatColor;
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
 import java.util.List;
 
 public final class Main extends JavaPlugin implements Listener {
+    GameCommandExecutor gameCommandExecutor;
 
     @Override
     public void onEnable() {
         super.onEnable();
 
-//        if(!getDataFolder().exists())
-//            getDataFolder().mkdirs();
+        gameCommandExecutor = new GameCommandExecutor(this);
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("md").setExecutor(new MainCommandExecutor(this));
-        getCommand("mg").setExecutor(new GameCommandExecutor(this));
+        getCommand("mg").setExecutor(gameCommandExecutor);
 
         saveDefaultConfig();
     }
@@ -42,9 +41,7 @@ public final class Main extends JavaPlugin implements Listener {
         buf.append("tellraw ").append(event.getPlayer().getName()).append(" ").append(msg);
         event.getPlayer().performCommand(buf.toString());
 
-        //msg = ChatColor.translateAlternateColorCodes('&', msg);
-        //event.getPlayer().sendMessage(msg);
-
+        gameCommandExecutor.onLogin(event.getPlayer());
     }
 
     @EventHandler
