@@ -1,0 +1,36 @@
+name: MinecraftDay
+version: @version@
+main: jp.minecraftday.minecraftinstrumentality.Main
+api-version: 1.13
+
+commands:
+  md:
+    description: マイクラデイサーバーセッティング
+    usage: /md welcome
+    permission: minecraftday.md
+    permission-message: You don't have <permission>
+  md welcome:
+    description: ログインメッセージを設定
+    permission: minecraftday.md.welcome
+    usage: /md welcome メッセージ
+  mg:
+    description: ミニゲーム
+    usage: /mg set/start/cancel
+    permission: minecraftday.mg
+    permission-message: You don't have <permission>
+  mg set:
+    description: ゲームの設定
+    permission: minecraftday.mg
+    usage: /mg set 分 [ゲーム名]
+  mg start:
+    description: ゲームスタート
+    permission: minecraftday.mg
+    usage: /mg start
+  mg list:
+    description: ゲームの参加者を表示
+    permission: minecraftday.mg
+    usage: /mg list
+  mg cancel:
+    description: ゲームキャンセル
+    permission: minecraftday.mg
+    usage: /mg cancel
