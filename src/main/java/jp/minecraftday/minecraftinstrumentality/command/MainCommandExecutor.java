@@ -1,6 +1,7 @@
 package jp.minecraftday.minecraftinstrumentality.command;
 
 import jp.minecraftday.minecraftinstrumentality.Main;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -45,7 +46,7 @@ public class MainCommandExecutor implements CommandExecutor {
                     sender.sendMessage("Welcomeメッセージ（コマンド対応)を設定しました");
                 } else {
                     StringBuilder builder = new StringBuilder();
-                    builder.append("[").append("{\"text\":\"").append(msg).append("\"}]");
+                    builder.append("[").append("{\"text\":\"").append(ChatColor.translateAlternateColorCodes('&', msg.toString())).append("\"}]");
                     plugin.getConfig().set("welcome.message", builder.toString());
                     sender.sendMessage("Welcomeメッセージを設定しました");
                 }
