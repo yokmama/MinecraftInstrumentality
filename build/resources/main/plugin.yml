@@ -1,56 +1,61 @@
 name: MinecraftDay
-version: 1.7-SNAPSHOT
+version: 1.8-SNAPSHOT
 main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
 
 commands:
   md:
-    description: マイクラデイサーバーセッティング
-    usage: /md welcome
+    description: サーバーセッティング
+    usage: "使用例: /<command> [welcome]"
     permission: minecraftday.md
-    permission-message: You don't have <permission>
+    permission-message: 使用する権利がありません <permission>
   md welcome:
     description: ログインメッセージを設定
     permission: minecraftday.md.welcome
-    usage: /md welcome メッセージ
-    permission-message: You don't have <permission>
-  mg:
+    usage: "使用例: /<command> メッセージ"
+    permission-message: 使用する権利がありません <permission>
+  minigame:
     description: ミニゲーム
-    usage: /mg set/start/cancel
+    aliases: mg
+    usage: "使用例: /<command> [set|start|invite|list|cancel|join|gather|finish]"
     permission: minecraftday.mg
-    permission-message: You don't have <permission>
-  mg set:
+    permission-message: 使用する権利がありません <permission>
+  minigame set:
     description: ゲームの設定
     permission: minecraftday.mg
-    usage: /mg set 分
-  mg start:
+    usage: "使用例: /<command> 分"
+  minigame start:
     description: ゲームスタート
     permission: minecraftday.mg
-    usage: /mg start
-  mg invite:
+    usage: "使用例: /<command>"
+  minigame invite:
     description: ゲームへの招待
     permission: minecraftday.mg
-    usage: /mg invite 名前
-  mg list:
+    usage: "使用例: /<command> プレイヤー名"
+  minigame list:
     description: ゲームの参加者を表示
     permission: minecraftday.mg
-    usage: /mg list
-  mg cancel:
+    usage: "使用例: /<command>"
+  minigame cancel:
     description: ゲームキャンセル
     permission: minecraftday.mg
-    usage: /mg cancel
-  mg join:
+    usage: "使用例: /<command>"
+  minigame join:
     description: ゲームへの参加
     permission: minecraftday.mg
-    usage: /mg join ゲーム番号
-  mg gather:
+    usage: "使用例: /<command> [ゲーム番号]"
+  minigame gather:
     description: プレイヤーの集合
     permission: minecraftday.mg.gather
-    usage: /mg gather
-  mg finish:
+    usage: "使用例: /<command>"
+  minigame finish:
     description: ゲームから離脱
     permission: minecraftday.mg
-    usage: /mg finish
+    usage: "使用例: /<command>"
+  setitem:
+    usage: "使用例: /<command> [name|lore]"
+    permission: minecraftday.sn
+    permission-message: 使用する権利がありません <permission>
 permissions:
   minecraftday.md:
     description: サーバー設定コマンドのパーミッション
@@ -61,3 +66,6 @@ permissions:
   minecraftday.mg.gather:
     description: 集合コマンドのパーミッション
     default: op
+  minecraftday.setitem:
+    description: ミニゲームコマンドのパーミッション
+    default: true

@@ -2,6 +2,7 @@ package jp.minecraftday.minecraftinstrumentality;
 
 import jp.minecraftday.minecraftinstrumentality.command.GameCommandExecutor;
 import jp.minecraftday.minecraftinstrumentality.command.MainCommandExecutor;
+import jp.minecraftday.minecraftinstrumentality.command.SetItemNameCommandExecutor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -22,7 +23,8 @@ public final class Main extends JavaPlugin implements Listener {
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("md").setExecutor(new MainCommandExecutor(this));
-        getCommand("mg").setExecutor(gameCommandExecutor);
+        getCommand("minigame").setExecutor(gameCommandExecutor);
+        getCommand("setitem").setExecutor(new SetItemNameCommandExecutor(this));
 
         saveDefaultConfig();
     }

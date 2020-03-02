@@ -62,7 +62,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
 
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (cmd.getName().equalsIgnoreCase("mg") && args.length > 0 && sender instanceof Player) {
+        if (cmd.getName().equalsIgnoreCase("minigame") && args.length > 0 && sender instanceof Player) {
             String cmd0 = args[0].toLowerCase();
             if (cmd0.equals("set")) {
                 initGame((Player) sender, Arrays.copyOfRange(args, 1, args.length));
@@ -240,6 +240,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         if (gameMaker != null) {
             gameMaker.cancel();
             remove(player.getName());
+            player.sendMessage("ゲームを解散しました");
         }else{
             player.sendMessage("あなたはゲーム作成者ではありません");
         }
