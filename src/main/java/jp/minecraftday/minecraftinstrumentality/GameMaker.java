@@ -3,6 +3,7 @@ package jp.minecraftday.minecraftinstrumentality;
 import jp.minecraftday.minecraftinstrumentality.command.GameCommandExecutor;
 import jp.minecraftday.minecraftinstrumentality.utils.TitleSender;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -156,7 +157,14 @@ public class GameMaker implements Runnable {
         for (String p : players) {
             Player player = Bukkit.getPlayerExact(p);
             if (player != null) {
-                titleSender.sendTitle(player, "§b"+title, "§3"+subtitle, "");
+                titleSender.sendTitle(player, "§b" + title, "§3" + subtitle, "");
+            }
+        }
+        //ホストにも通知する
+        if (!players.contains(hostplayer)) {
+            Player player = Bukkit.getPlayerExact(hostplayer);
+            if (player != null) {
+                titleSender.sendTitle(player, "§b" + title, "§3" + subtitle, "");
             }
         }
     }
@@ -174,7 +182,7 @@ public class GameMaker implements Runnable {
         for (String p : players) {
             Player player = Bukkit.getPlayerExact(p);
             if (player != null) {
-                player.sendMessage("§a<Bot> " + msg);
+                player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
             }
         }
     }
@@ -182,7 +190,7 @@ public class GameMaker implements Runnable {
     public void sendMessage(String playerName, String msg) {
         Player player = Bukkit.getPlayerExact(playerName);
         if (player != null) {
-            player.sendMessage("§a<Bot> " + msg);
+            player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
         }
     }
 

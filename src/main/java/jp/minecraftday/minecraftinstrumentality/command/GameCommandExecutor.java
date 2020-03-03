@@ -140,7 +140,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
 
         GameMaker gameMaker = games.get(gameID);
         if (gameMaker == null || gameMaker.isInGame()) {
-            player.sendMessage("指定されたゲームがないから、すでにスタートしているゲームです");
+            player.sendMessage("指定されたゲームがないか、すでにスタートしているゲームです");
             return;
         }
 
@@ -158,8 +158,8 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
 
         gameMaker.addPlayer(player);
 
-        gameMaker.sendMessage(gameMaker.getHostplayer(), player.getName()+"がゲームに参加しました");
-        gameMaker.sendMessage(player.getName(), "ゲームに参加しました");
+        gameMaker.sendMessage(gameMaker.getHostplayer(), "&c" + player.getName()+"&6がゲームに参加しました");
+        gameMaker.sendMessage(player.getName(), "&6ゲームに参加しました");
 
     }
 
@@ -187,19 +187,21 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
     }
 
     private void sendInviteMessage(GameMaker gameMaker, Player player){
-        StringBuilder msg = new StringBuilder();
-        msg.append(gameMaker.getHostplayer());
-        msg.append("さんのゲームに参加しますか？ 参加するなら /mg join ");
-        msg.append(playerIDs.get(gameMaker.getHostplayer()));
-        gameMaker.sendMessage(player.getName(), msg.toString());
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("&c").append(player.getName()).append(" &6がゲーム参加の要求を送信しています。\n");
+        builder.append("ゲームに参加するなら &c/mg join ").append(playerIDs.get(gameMaker.getHostplayer()))
+                .append(" &6を使用してください。\n");
+
+        gameMaker.sendMessage(player.getName(), builder.toString());
     }
 
     private void finishGame(Player player){
         Optional<GameMaker> game = games.values().stream().filter(g -> g.isJoining(player.getName())).findFirst();
         if (game.isPresent()) {
             game.get().removePlayer(player);
-            game.get().sendMessage(player.getName(),"ゲームを終了しました");
-            game.get().sendMessage(game.get().getHostplayer(), player.getName()+"がゲームから抜けました");
+            game.get().sendMessage(player.getName(),"&6ゲームを終了しました");
+            game.get().sendMessage(game.get().getHostplayer(), "&c"+player.getName()+"&6がゲームから抜けました");
         }else{
             player.sendMessage("参加しているゲームがありません");
         }
@@ -211,7 +213,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
             StringBuilder builder = new StringBuilder();
             game.get().getPlayers().forEach(p -> builder.append(" ").append(p));
 
-            game.get().sendMessage(player.getName(), builder.toString());
+            game.get().sendMessage(player.getName(), "&6"+builder.toString());
         }else{
             player.sendMessage("参加しているゲームがありません");
         }

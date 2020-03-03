@@ -1,5 +1,5 @@
 name: MinecraftDay
-version: 1.8-SNAPSHOT
+version: 1.10-SNAPSHOT
 main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
 
@@ -54,7 +54,19 @@ commands:
     usage: "使用例: /<command>"
   setitem:
     usage: "使用例: /<command> [name|lore]"
-    permission: minecraftday.sn
+    permission: minecraftday.setitem
+    permission-message: 使用する権利がありません <permission>
+  vote:
+    usage: "使用例: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
+    permission: minecraftday.vote
+    permission-message: 使用する権利がありません <permission>
+  voteyes:
+    usage: "使用例: /<command>"
+    permission: minecraftday.vote.yes
+    permission-message: 使用する権利がありません <permission>
+  voteno:
+    usage: "使用例: /<command>"
+    permission: minecraftday.vote.no
     permission-message: 使用する権利がありません <permission>
 permissions:
   minecraftday.md:
@@ -67,5 +79,14 @@ permissions:
     description: 集合コマンドのパーミッション
     default: op
   minecraftday.setitem:
-    description: ミニゲームコマンドのパーミッション
+    description: アイテム名設定コマンドのパーミッション
+    default: true
+  minecraftday.vote:
+    description: 投票コマンドのパーミッション
+    default: true
+  minecraftday.vote.yes:
+    description: いいねのパーミッション
+    default: true
+  minecraftday.vote.no:
+    description: だめのパーミッション
     default: true

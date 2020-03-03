@@ -24,6 +24,10 @@ public class MainCommandExecutor implements CommandExecutor {
             plugin.getConfig().set("welcome.message", builder.toString());
             plugin.saveConfig();
         }
+        if (!plugin.getConfig().isSet("vote.jailname")) {
+            plugin.getConfig().set("vote.jailname", "test");
+            plugin.saveConfig();
+        }
 
     }
 
