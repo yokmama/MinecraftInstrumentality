@@ -5,10 +5,14 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-public class MainCommandExecutor implements CommandExecutor {
+public class MainCommandExecutor implements CommandExecutor, TabExecutor {
     private final Main plugin;
 
     public MainCommandExecutor(Main ref) {
@@ -28,7 +32,6 @@ public class MainCommandExecutor implements CommandExecutor {
             plugin.getConfig().set("vote.jailname", "test");
             plugin.saveConfig();
         }
-
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -63,4 +66,21 @@ public class MainCommandExecutor implements CommandExecutor {
         }
         return false;
     }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equals("md")) {
+            List<String> list = new ArrayList(Arrays.asList("welcome", "reload"));
+
+            if (args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if (args.length == 1) {
+                for (String s : list) {
+                    if (s.startsWith(args[0])) return Collections.singletonList(s);
+                }
+            }
+        }
+        return null;
+    }
+
 }

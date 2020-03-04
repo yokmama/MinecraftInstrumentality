@@ -8,6 +8,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -17,7 +18,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
-public class GameCommandExecutor implements CommandExecutor, PlayerEventListner {
+public class GameCommandExecutor implements CommandExecutor, PlayerEventListner, TabExecutor {
     final Main plugin;
     static AtomicInteger ids = new AtomicInteger();
     static AtomicInteger counter = new AtomicInteger();
@@ -36,7 +37,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         });
     }
 
-    public boolean isShutdown(){
+    public boolean isShutdown() {
         return pool.isShutdown();
     }
 
@@ -55,7 +56,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         return playerID;
     }
 
-    public void remove(String playerName){
+    public void remove(String playerName) {
         Integer playerID = playerIDs.get(playerName);
         games.remove(playerID);
     }
@@ -87,6 +88,22 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         return false;
     }
 
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equals("minigame")) {
+            List<String> list = new ArrayList(Arrays.asList("set", "start", "invite", "list", "cancel", "join", "gather", "finish"));
+
+            if (args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if (args.length == 1) {
+                for (String s : list) {
+                    if (s.startsWith(args[0])) return Collections.singletonList(s);
+                }
+            }
+        }
+        return null;
+    }
+
     private void initGame(Player hostplayer, String[] cmds) {
         final Integer playerID = incrementAndGetPlayerID(hostplayer);
 
@@ -94,7 +111,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         if (gameMaker != null && gameMaker.isInGame()) {
             hostplayer.sendMessage("すでにゲームがスタートしています。一度キャンセルしましょう");
             return;
-        }else if( gameMaker == null){
+        } else if (gameMaker == null) {
             gameMaker = new GameMaker(this, hostplayer);
         }
 
@@ -126,7 +143,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
     }
 
     private void joinGame(Player player, String[] cmds) {
-        if(cmds.length == 0){
+        if (cmds.length == 0) {
             player.sendMessage("ゲーム番号をいれてください");
         }
 
@@ -145,40 +162,40 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         }
 
         GameMaker hostingGame = getGameMaker(player);
-        if (hostingGame!=null && !hostingGame.getHostplayer().equals(gameMaker.getHostplayer())) {
+        if (hostingGame != null && !hostingGame.getHostplayer().equals(gameMaker.getHostplayer())) {
             player.sendMessage("ゲームの作成者は他のゲームには参加できません");
             return;
         }
 
 
         GameMaker ogm = getJoiningGame(player.getName());
-        if(ogm!=null){
+        if (ogm != null) {
             ogm.removePlayer(player);
         }
 
         gameMaker.addPlayer(player);
 
-        gameMaker.sendMessage(gameMaker.getHostplayer(), "&c" + player.getName()+"&6がゲームに参加しました");
+        gameMaker.sendMessage(gameMaker.getHostplayer(), "&c" + player.getName() + "&6がゲームに参加しました");
         gameMaker.sendMessage(player.getName(), "&6ゲームに参加しました");
 
     }
 
     private void invitePlayer(Player player, String[] cmds) {
-        if(cmds.length == 0){
+        if (cmds.length == 0) {
             player.sendMessage("プレイヤー名をいれてください");
         }
 
         GameMaker gameMaker = getJoiningGame(player.getName());
-        if(gameMaker == null){
+        if (gameMaker == null) {
             gameMaker = getGameMaker(player);
         }
 
-        if(gameMaker == null){
+        if (gameMaker == null) {
             player.sendMessage("ゲームに参加していないため招待できません");
             return;
         }
 
-        for(String playerName: cmds){
+        for (String playerName : cmds) {
             Player invitePlayer = Bukkit.getPlayerExact(playerName);
             if (invitePlayer != null) {
                 sendInviteMessage(gameMaker, invitePlayer);
@@ -186,7 +203,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         }
     }
 
-    private void sendInviteMessage(GameMaker gameMaker, Player player){
+    private void sendInviteMessage(GameMaker gameMaker, Player player) {
 
         StringBuilder builder = new StringBuilder();
         builder.append("&c").append(player.getName()).append(" &6がゲーム参加の要求を送信しています。\n");
@@ -196,13 +213,13 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         gameMaker.sendMessage(player.getName(), builder.toString());
     }
 
-    private void finishGame(Player player){
+    private void finishGame(Player player) {
         Optional<GameMaker> game = games.values().stream().filter(g -> g.isJoining(player.getName())).findFirst();
         if (game.isPresent()) {
             game.get().removePlayer(player);
-            game.get().sendMessage(player.getName(),"&6ゲームを終了しました");
-            game.get().sendMessage(game.get().getHostplayer(), "&c"+player.getName()+"&6がゲームから抜けました");
-        }else{
+            game.get().sendMessage(player.getName(), "&6ゲームを終了しました");
+            game.get().sendMessage(game.get().getHostplayer(), "&c" + player.getName() + "&6がゲームから抜けました");
+        } else {
             player.sendMessage("参加しているゲームがありません");
         }
     }
@@ -213,8 +230,8 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
             StringBuilder builder = new StringBuilder();
             game.get().getPlayers().forEach(p -> builder.append(" ").append(p));
 
-            game.get().sendMessage(player.getName(), "&6"+builder.toString());
-        }else{
+            game.get().sendMessage(player.getName(), "&6" + builder.toString());
+        } else {
             player.sendMessage("参加しているゲームがありません");
         }
     }
@@ -228,7 +245,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
         }
     }
 
-    private void gatherPlayer(Player player){
+    private void gatherPlayer(Player player) {
         GameMaker gameMaker = getGameMaker(player);
         if (gameMaker != null) {
             gameMaker.gather();
@@ -243,7 +260,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
             gameMaker.cancel();
             remove(player.getName());
             player.sendMessage("ゲームを解散しました");
-        }else{
+        } else {
             player.sendMessage("あなたはゲーム作成者ではありません");
         }
     }
@@ -259,11 +276,11 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner 
     @Override
     public void onLogin(Player player) {
         GameMaker gameMaker = getJoiningGame(player.getName());
-        if(gameMaker!=null){
+        if (gameMaker != null) {
             player.setScoreboard(gameMaker.getScoreboard());
         } else {
             gameMaker = getGameMaker(player);
-            if(gameMaker!=null){
+            if (gameMaker != null) {
                 player.setScoreboard(gameMaker.getScoreboard());
             }
         }

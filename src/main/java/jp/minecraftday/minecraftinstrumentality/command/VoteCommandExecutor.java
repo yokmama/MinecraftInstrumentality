@@ -7,13 +7,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
-import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
-public class VoteCommandExecutor implements CommandExecutor {
+public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
     final Main plugin;
     Timer theTimer = null;
     VoteTask currentTask = null;
@@ -57,6 +56,29 @@ public class VoteCommandExecutor implements CommandExecutor {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equals("vote")) {
+            List<String> list = new ArrayList(Arrays.asList("day","night","sun","rain", "unjail", "ummute","yes","no"));
+
+            if(sender.hasPermission("minecraftday.vote.jail")){
+                list.add("jail");
+            }
+            if(sender.hasPermission("minecraftday.vote.mute")){
+                list.add("mute");
+            }
+
+            if (args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if(args.length == 1){
+                for(String s : list){
+                    if(s.startsWith(args[0])) return Collections.singletonList(s);
+                }
+            }
+        }
+        return null;
     }
 
     private void voteDay(Player player) {
@@ -228,7 +250,6 @@ public class VoteCommandExecutor implements CommandExecutor {
     void sendMessage(Player p, String msg) {
         p.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
     }
-
 
     abstract class VoteTask extends TimerTask {
         int numVotersCount = 0;

@@ -6,15 +6,17 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class SetItemNameCommandExecutor implements CommandExecutor{
+public class SetItemNameCommandExecutor implements CommandExecutor, TabExecutor {
     final Main plugin;
 
     public SetItemNameCommandExecutor(Main ref) {
@@ -36,48 +38,69 @@ public class SetItemNameCommandExecutor implements CommandExecutor{
         return false;
     }
 
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        if (command.getName().equals("setitem")) {
+            List<String> list = new ArrayList(Arrays.asList("name", "lore"));
+
+            if (args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if (args.length == 1) {
+                for (String s : list) {
+                    if (s.startsWith(args[0])) return Collections.singletonList(s);
+                }
+            }
+        }
+        return null;
+    }
+
     private void setName(Player player, String[] args) {
         StringBuilder builder = new StringBuilder();
-        if(args!=null && args.length>0){
-            Arrays.stream(args).forEach(s -> {if(builder.length()>0) builder.append(" "); builder.append(s);});
+        if (args != null && args.length > 0) {
+            Arrays.stream(args).forEach(s -> {
+                if (builder.length() > 0) builder.append(" ");
+                builder.append(s);
+            });
         }
 
         ItemStack itemStack = player.getInventory().getItemInMainHand();
-        if(itemStack != null && !itemStack.getType().isAir()){
-            if(builder.length()>0){
+        if (itemStack != null && !itemStack.getType().isAir()) {
+            if (builder.length() > 0) {
                 ItemMeta meta = itemStack.getItemMeta();
                 meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', builder.toString()));
                 itemStack.setItemMeta(meta);
-            }else{
+            } else {
                 ItemMeta deafultMeta = Bukkit.getItemFactory().getItemMeta(itemStack.getType());
                 ItemMeta meta = itemStack.getItemMeta();
                 meta.setDisplayName(deafultMeta.getDisplayName());
                 itemStack.setItemMeta(meta);
             }
-        }else{
+        } else {
             player.sendMessage("アイテムをもっていません");
         }
     }
 
     private void setLore(Player player, String[] args) {
         List<String> list = new ArrayList<>();
-        if(args!=null && args.length>0){
-            Arrays.stream(args).forEach(s -> {list.add(ChatColor.translateAlternateColorCodes('&', s));});
+        if (args != null && args.length > 0) {
+            Arrays.stream(args).forEach(s -> {
+                list.add(ChatColor.translateAlternateColorCodes('&', s));
+            });
         }
 
         ItemStack itemStack = player.getInventory().getItemInMainHand();
-        if(itemStack != null && !itemStack.getType().isAir()){
-            if(list.size()>0){
+        if (itemStack != null && !itemStack.getType().isAir()) {
+            if (list.size() > 0) {
                 ItemMeta meta = itemStack.getItemMeta();
                 meta.setLore(list);
                 itemStack.setItemMeta(meta);
-            }else{
+            } else {
                 ItemMeta deafultMeta = Bukkit.getItemFactory().getItemMeta(itemStack.getType());
                 ItemMeta meta = itemStack.getItemMeta();
                 meta.setLore(deafultMeta.getLore());
                 itemStack.setItemMeta(meta);
             }
-        }else{
+        } else {
             player.sendMessage("アイテムをもっていません");
         }
     }

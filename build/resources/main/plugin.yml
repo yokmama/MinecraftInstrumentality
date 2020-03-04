@@ -1,18 +1,13 @@
 name: MinecraftDay
-version: 1.10-SNAPSHOT
+version: 1.11-SNAPSHOT
 main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
 
 commands:
   md:
     description: サーバーセッティング
-    usage: "使用例: /<command> [welcome]"
+    usage: "使用例: /<command> [welcome|reload]"
     permission: minecraftday.md
-    permission-message: 使用する権利がありません <permission>
-  md welcome:
-    description: ログインメッセージを設定
-    permission: minecraftday.md.welcome
-    usage: "使用例: /<command> メッセージ"
     permission-message: 使用する権利がありません <permission>
   minigame:
     description: ミニゲーム
@@ -60,6 +55,14 @@ commands:
     usage: "使用例: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
     permission: minecraftday.vote
     permission-message: 使用する権利がありません <permission>
+  vote jail:
+    usage: "使用例: /<command> jail"
+    permission: minecraftday.vote.jail
+    permission-message: 使用する権利がありません <permission>
+  vote mute:
+    usage: "使用例: /<command> mute"
+    permission: minecraftday.vote.mute
+    permission-message: 使用する権利がありません <permission>
   voteyes:
     usage: "使用例: /<command>"
     permission: minecraftday.vote.yes
@@ -84,6 +87,12 @@ permissions:
   minecraftday.vote:
     description: 投票コマンドのパーミッション
     default: true
+  minecraftday.vote.jail:
+    description: 投獄コマンドのパーミッション
+    default: op
+  minecraftday.vote.mute:
+    description: 無言コマンドのパーミッション
+    default: op
   minecraftday.vote.yes:
     description: いいねのパーミッション
     default: true
