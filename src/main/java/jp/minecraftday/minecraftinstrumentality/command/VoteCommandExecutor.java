@@ -198,6 +198,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         if (currentTask != null && currentTask.isVotingRight(player)) {
             currentTask.numSupporters++;
             if (currentTask.isFinish()) {
+                currentTask.cancel();
                 currentTask.run();
             }
         }
@@ -207,6 +208,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         if (currentTask != null && currentTask.isVotingRight(player)) {
             currentTask.numOpponents++;
             if (currentTask.isFinish()) {
+                currentTask.cancel();
                 currentTask.run();
             }
         }
@@ -238,6 +240,11 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
             }
         });
 
+        //投票者に送信
+        StringBuilder msg = new StringBuilder();
+        msg.append("&c").append(player.getName()).append(" &6が「").append(task.question()).append("」の投票を始めました！\n");
+        player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg.toString()));
+
         if (task.numVotersCount == 0) {
             task.run();
         } else {
@@ -256,9 +263,9 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         int numSupporters = 0;
         int numOpponents = 0;
         int minimumRequired = 0;
-        String senderName = null;
+        String senderName;
         String targetName = null;
-        boolean isVoteEveryone = false;
+        boolean isVoteEveryone;
 
         String question = "";
 
@@ -311,7 +318,6 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
             try {
                 int fixNumSupporters = numSupporters + (numVotersCount - (numSupporters + numOpponents));
                 boolean check = numVotersCount == 0 || ((double) fixNumSupporters / numVotersCount) > 0.8;
-                Player player = Bukkit.getPlayer(senderName);
                 if (check) {
                     getPlayers().forEach(p -> sendMessage(p, "&6"+question+"の投票はいいね！にきまりました"));
                     Threading.postToServerThread(new Threading.Task(plugin) {
