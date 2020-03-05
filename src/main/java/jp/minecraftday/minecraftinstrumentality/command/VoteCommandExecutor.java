@@ -82,7 +82,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
     }
 
     private void voteDay(Player player) {
-        vote(player, new VoteTask(player, null, "時間を朝にする") {
+        vote(player, new VoteTask(player, null, "時間を朝にする", true) {
             @Override
             void execute() {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "time set day");
@@ -92,7 +92,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
     }
 
     private void voteNight(Player player) {
-        vote(player, new VoteTask(player, null, "時間を夜にする") {
+        vote(player, new VoteTask(player, null, "時間を夜にする", true) {
             @Override
             void execute() {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "time set night");
@@ -102,7 +102,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
     }
 
     private void voteSun(Player player) {
-        vote(player, new VoteTask(player, null, "天気を晴れにする") {
+        vote(player, new VoteTask(player, null, "天気を晴れにする", false) {
             @Override
             void execute() {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "minecraft:weather clear");
@@ -112,7 +112,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
     }
 
     private void voteRain(Player player) {
-        vote(player, new VoteTask(player, null, "天気を雨にする") {
+        vote(player, new VoteTask(player, null, "天気を雨にする", false) {
             @Override
             void execute() {
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "minecraft:weather rain");
@@ -128,7 +128,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(target!=null) {
-            vote(player, new VoteTask(player, target, args[0]+" をおくちチャックする", 3) {
+            vote(player, new VoteTask(player, target, args[0]+" をおくちチャックする", 3, true) {
                 @Override
                 void execute() {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mute "+args[0]);
@@ -146,7 +146,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(target!=null) {
-            vote(player, new VoteTask(player, target, args[0]+" をしゃべれるようにする") {
+            vote(player, new VoteTask(player, target, args[0]+" をしゃべれるようにする", true) {
                 @Override
                 void execute() {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "unmute "+args[0]);
@@ -164,7 +164,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(target!=null) {
-            vote(player, new VoteTask(player, target, args[0]+" をろうやに入れる", 3) {
+            vote(player, new VoteTask(player, target, args[0]+" をろうやに入れる", 3, true) {
                 @Override
                 void execute() {
                     String jailname = plugin.getConfig().getString("vote.jailname");
@@ -183,7 +183,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(target!=null) {
-            vote(player, new VoteTask(player, target, args[0]+" をろうやから出す") {
+            vote(player, new VoteTask(player, target, args[0]+" をろうやから出す", true) {
                 @Override
                 void execute() {
                     Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "unjail "+args[0]);
@@ -220,13 +220,13 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(task.minimumRequired>0){
-            if(player.getWorld().getPlayers().size()<task.minimumRequired){
+            if(task.getPlayers().size()<task.minimumRequired){
                 player.sendMessage("その投票は最低 " + task.minimumRequired + "人いないと始めれません");
                 return;
             }
         }
 
-        player.getWorld().getPlayers().forEach(p -> {
+        task.getPlayers().forEach(p -> {
             if (!task.senderName.equals(p.getName()) && (task.targetName == null ||!task.targetName.equals(p.getName()))) {
                 StringBuilder builder = new StringBuilder();
                 builder.append("&c").append(player.getName()).append(" &6が「").append(task.question()).append("」の投票を始めました！\n");
@@ -258,20 +258,23 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         int minimumRequired = 0;
         String senderName = null;
         String targetName = null;
+        boolean isVoteEveryone = false;
 
         String question = "";
 
-        VoteTask(Player player, Player target, String question) {
+        VoteTask(Player player, Player target, String question, boolean isVoteEveryone) {
             senderName = player.getName();
             if (target != null) targetName = target.getName();
             this.question = question;
+            this.isVoteEveryone = isVoteEveryone;
         }
 
-        VoteTask(Player player, Player target, String question, int minimumRequired) {
+        VoteTask(Player player, Player target, String question, int minimumRequired, boolean isVoteEveryone) {
             senderName = player.getName();
             this.minimumRequired = minimumRequired;
             if (target != null) targetName = target.getName();
             this.question = question;
+            this.isVoteEveryone = isVoteEveryone;
         }
 
         String question() {
@@ -291,6 +294,17 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
 
         abstract void execute();
 
+        Collection<? extends Player> getPlayers(){
+            if(isVoteEveryone){
+                //もし全員投票なら全部のワールドのプレイヤー返却する
+                return Bukkit.getOnlinePlayers();
+            }else {
+                //そうでなければそのプレイヤーのいるワールドのプレイヤーを返却する
+                Player player = Bukkit.getPlayerExact(senderName);
+                return player.getWorld().getPlayers();
+            }
+        }
+
 
         @Override
         public void run() {
@@ -299,7 +313,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
                 boolean check = numVotersCount == 0 || ((double) fixNumSupporters / numVotersCount) > 0.8;
                 Player player = Bukkit.getPlayer(senderName);
                 if (check) {
-                    player.getWorld().getPlayers().forEach(p -> sendMessage(p, "&6投票はいいね！にきまりました"));
+                    getPlayers().forEach(p -> sendMessage(p, "&6"+question+"の投票はいいね！にきまりました"));
                     Threading.postToServerThread(new Threading.Task(plugin) {
                         @Override
                         public void execute() {
@@ -307,7 +321,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
                         }
                     });
                 } else {
-                    player.getWorld().getPlayers().forEach(p -> sendMessage(p, "&6投票はだめ！にきまりました"));
+                    getPlayers().forEach(p -> sendMessage(p, "&6"+question+"の投票はだめ！にきまりました"));
                 }
             } finally {
                 theTimer = null;
