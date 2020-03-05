@@ -5,97 +5,97 @@ api-version: 1.13
 
 commands:
   md:
-    description: サーバーセッティング
-    usage: "使用例: /<command> [welcome|reload]"
+    description: Server Setting
+    usage: "Usage: /<command> [welcome|reload]"
     permission: minecraftday.md
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   minigame:
-    description: ミニゲーム
+    description: mini game
     aliases: mg
-    usage: "使用例: /<command> [set|start|invite|list|cancel|join|gather|finish]"
+    usage: "Usage: /<command> [set|start|invite|list|cancel|join|gather|finish]"
     permission: minecraftday.mg
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   minigame set:
-    description: ゲームの設定
+    description: game settings
     permission: minecraftday.mg
-    usage: "使用例: /<command> 分"
+    usage: "Usage: /<command> min"
   minigame start:
-    description: ゲームスタート
+    description: start game
     permission: minecraftday.mg
-    usage: "使用例: /<command>"
+    usage: "Usage: /<command>"
   minigame invite:
-    description: ゲームへの招待
+    description: invite game
     permission: minecraftday.mg
-    usage: "使用例: /<command> プレイヤー名"
+    usage: "Usage: /<command> player name"
   minigame list:
-    description: ゲームの参加者を表示
+    description: list of players
     permission: minecraftday.mg
-    usage: "使用例: /<command>"
+    usage: "Usage: /<command>"
   minigame cancel:
-    description: ゲームキャンセル
+    description: cancel game
     permission: minecraftday.mg
-    usage: "使用例: /<command>"
+    usage: "Usage: /<command>"
   minigame join:
-    description: ゲームへの参加
+    description: join game
     permission: minecraftday.mg
-    usage: "使用例: /<command> [ゲーム番号]"
+    usage: "Usage: /<command> [game no]"
   minigame gather:
-    description: プレイヤーの集合
+    description: gather players
     permission: minecraftday.mg.gather
-    usage: "使用例: /<command>"
+    usage: "Usage: /<command>"
   minigame finish:
-    description: ゲームから離脱
+    description: finish game
     permission: minecraftday.mg
-    usage: "使用例: /<command>"
+    usage: "Usage: /<command>"
   setitem:
-    usage: "使用例: /<command> [name|lore]"
+    usage: "Usage: /<command> [name|lore]"
     permission: minecraftday.setitem
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   vote:
-    usage: "使用例: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
+    usage: "Usage: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
     permission: minecraftday.vote
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   vote jail:
-    usage: "使用例: /<command> jail"
+    usage: "Usage: /<command> jail"
     permission: minecraftday.vote.jail
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   vote mute:
-    usage: "使用例: /<command> mute"
+    usage: "Usage: /<command> mute"
     permission: minecraftday.vote.mute
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   voteyes:
-    usage: "使用例: /<command>"
+    usage: "Usage: /<command>"
     permission: minecraftday.vote.yes
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   voteno:
-    usage: "使用例: /<command>"
+    usage: "Usage: /<command>"
     permission: minecraftday.vote.no
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
 permissions:
   minecraftday.md:
-    description: サーバー設定コマンドのパーミッション
+    description: server settings permission
     default: op
   minecraftday.mg:
-    description: ミニゲームコマンドのパーミッション
+    description: minigame permission
     default: true
   minecraftday.mg.gather:
-    description: 集合コマンドのパーミッション
+    description: gather command permission
     default: op
   minecraftday.setitem:
-    description: アイテム名設定コマンドのパーミッション
+    description: itemname command permission
     default: true
   minecraftday.vote:
-    description: 投票コマンドのパーミッション
+    description: vote command permission
     default: true
   minecraftday.vote.jail:
-    description: 投獄コマンドのパーミッション
+    description: jail command permission
     default: op
   minecraftday.vote.mute:
-    description: 無言コマンドのパーミッション
+    description: mute command permission
     default: op
   minecraftday.vote.yes:
-    description: いいねのパーミッション
+    description: voteyes command permission
     default: true
   minecraftday.vote.no:
-    description: だめのパーミッション
+    description: voteno command permission
     default: true
