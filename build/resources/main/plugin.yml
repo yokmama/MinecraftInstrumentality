@@ -1,101 +1,101 @@
 name: MinecraftDay
-version: 1.11-SNAPSHOT
+version: 1.12-SNAPSHOT
 main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
 
 commands:
   md:
-    description: サーバーセッティング
-    usage: "使用例: /<command> [welcome|reload]"
+    description: サーバ�?�セ�?�?ィング
+    usage: "使用�?: /<command> [welcome|reload]"
     permission: minecraftday.md
     permission-message: 使用する権利がありません <permission>
   minigame:
-    description: ミニゲーム
+    description: ミニゲー�?
     aliases: mg
-    usage: "使用例: /<command> [set|start|invite|list|cancel|join|gather|finish]"
+    usage: "使用�?: /<command> [set|start|invite|list|cancel|join|gather|finish]"
     permission: minecraftday.mg
     permission-message: 使用する権利がありません <permission>
   minigame set:
-    description: ゲームの設定
+    description: ゲー�?の設�?
     permission: minecraftday.mg
-    usage: "使用例: /<command> 分"
+    usage: "使用�?: /<command> �?"
   minigame start:
-    description: ゲームスタート
+    description: ゲー�?スター�?
     permission: minecraftday.mg
-    usage: "使用例: /<command>"
+    usage: "使用�?: /<command>"
   minigame invite:
-    description: ゲームへの招待
+    description: ゲー�?への招�?
     permission: minecraftday.mg
-    usage: "使用例: /<command> プレイヤー名"
+    usage: "使用�?: /<command> プレイヤー�?"
   minigame list:
-    description: ゲームの参加者を表示
+    description: ゲー�?の参加�?を表示
     permission: minecraftday.mg
-    usage: "使用例: /<command>"
+    usage: "使用�?: /<command>"
   minigame cancel:
-    description: ゲームキャンセル
+    description: ゲー�?キャンセル
     permission: minecraftday.mg
-    usage: "使用例: /<command>"
+    usage: "使用�?: /<command>"
   minigame join:
-    description: ゲームへの参加
+    description: ゲー�?への参加
     permission: minecraftday.mg
-    usage: "使用例: /<command> [ゲーム番号]"
+    usage: "使用�?: /<command> [ゲー�?番号]"
   minigame gather:
-    description: プレイヤーの集合
+    description: プレイヤーの�?�?
     permission: minecraftday.mg.gather
-    usage: "使用例: /<command>"
+    usage: "使用�?: /<command>"
   minigame finish:
-    description: ゲームから離脱
+    description: ゲー�?から離脱
     permission: minecraftday.mg
-    usage: "使用例: /<command>"
+    usage: "使用�?: /<command>"
   setitem:
-    usage: "使用例: /<command> [name|lore]"
+    usage: "使用�?: /<command> [name|lore]"
     permission: minecraftday.setitem
     permission-message: 使用する権利がありません <permission>
   vote:
-    usage: "使用例: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
+    usage: "使用�?: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
     permission: minecraftday.vote
     permission-message: 使用する権利がありません <permission>
   vote jail:
-    usage: "使用例: /<command> jail"
+    usage: "使用�?: /<command> jail"
     permission: minecraftday.vote.jail
     permission-message: 使用する権利がありません <permission>
   vote mute:
-    usage: "使用例: /<command> mute"
+    usage: "使用�?: /<command> mute"
     permission: minecraftday.vote.mute
     permission-message: 使用する権利がありません <permission>
   voteyes:
-    usage: "使用例: /<command>"
+    usage: "使用�?: /<command>"
     permission: minecraftday.vote.yes
     permission-message: 使用する権利がありません <permission>
   voteno:
-    usage: "使用例: /<command>"
+    usage: "使用�?: /<command>"
     permission: minecraftday.vote.no
     permission-message: 使用する権利がありません <permission>
 permissions:
   minecraftday.md:
-    description: サーバー設定コマンドのパーミッション
+    description: サーバ�?�設定コマンド�?�パ�?�ミッション
     default: op
   minecraftday.mg:
-    description: ミニゲームコマンドのパーミッション
+    description: ミニゲー�?コマンド�?�パ�?�ミッション
     default: true
   minecraftday.mg.gather:
-    description: 集合コマンドのパーミッション
+    description: �?合コマンド�?�パ�?�ミッション
     default: op
   minecraftday.setitem:
-    description: アイテム名設定コマンドのパーミッション
+    description: アイ�?�?名設定コマンド�?�パ�?�ミッション
     default: true
   minecraftday.vote:
-    description: 投票コマンドのパーミッション
+    description: 投票コマンド�?�パ�?�ミッション
     default: true
   minecraftday.vote.jail:
-    description: 投獄コマンドのパーミッション
+    description: 投獄コマンド�?�パ�?�ミッション
     default: op
   minecraftday.vote.mute:
-    description: 無言コマンドのパーミッション
+    description: 無�?コマンド�?�パ�?�ミッション
     default: op
   minecraftday.vote.yes:
-    description: いいねのパーミッション
+    description: �?�?ねのパ�?�ミッション
     default: true
   minecraftday.vote.no:
-    description: だめのパーミッション
+    description: �?め�?�パ�?�ミッション
     default: true
