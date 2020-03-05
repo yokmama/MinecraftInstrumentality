@@ -8,3 +8,6 @@ build
 # Java
 *.class
 *.jar
+.gradle/**
+.idea/**
+build/**
