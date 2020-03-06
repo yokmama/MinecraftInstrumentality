@@ -1,9 +1,7 @@
 package jp.minecraftday.minecraftinstrumentality.command;
 
 import jp.minecraftday.minecraftinstrumentality.GameMaker;
-import jp.minecraftday.minecraftinstrumentality.PlayerEventListner;
 import jp.minecraftday.minecraftinstrumentality.Main;
-import jp.minecraftday.minecraftinstrumentality.utils.TitleSender;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,15 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
-public class GameCommandExecutor implements CommandExecutor, PlayerEventListner, TabExecutor {
+public class GameCommandExecutor implements CommandExecutor, TabExecutor {
     final Main plugin;
     static AtomicInteger ids = new AtomicInteger();
-    static AtomicInteger counter = new AtomicInteger();
     final ExecutorService pool;
     static Map<Integer, GameMaker> games = new ConcurrentHashMap<>();
-    static Map<String, Integer> playerIDs = new ConcurrentHashMap<>();
 
 
     public GameCommandExecutor(Main ref) {
@@ -42,22 +37,13 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner,
     }
 
     private GameMaker getGameMaker(Player player) {
-        Integer playerID = playerIDs.get(player.getName());
+        Integer playerID = plugin.getPlayerNo(player.getName());
         if (playerID == null) return null;
         return games.get(playerID);
     }
 
-    private Integer incrementAndGetPlayerID(Player player) {
-        Integer playerID = playerIDs.get(player.getName());
-        if (playerID == null) {
-            playerID = counter.incrementAndGet();
-            playerIDs.put(player.getName(), playerID);
-        }
-        return playerID;
-    }
-
     public void remove(String playerName) {
-        Integer playerID = playerIDs.get(playerName);
+        Integer playerID = plugin.getPlayerNo(playerName);
         games.remove(playerID);
     }
 
@@ -131,7 +117,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner,
     }
 
     private void setGame(Player hostplayer, String[] cmds) {
-        final Integer playerID = incrementAndGetPlayerID(hostplayer);
+        final Integer playerID = plugin.getPlayerNo(hostplayer.getName());
 
         GameMaker gameMaker = games.get(playerID);
         if (gameMaker != null && gameMaker.isInGame()) {
@@ -152,7 +138,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner,
                 return;
             }
         } else {
-            hostplayer.sendMessage("mg set 分");
+            hostplayer.sendMessage("/mg set 分");
             return;
         }
 
@@ -160,7 +146,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner,
 
         final GameMaker gm = gameMaker;
         hostplayer.getWorld().getPlayers().forEach(player -> {
-            if (player.getLocation().distance(hostplayer.getLocation()) < 20) {
+            if (player.getLocation().distance(hostplayer.getLocation()) <  32) {
                 sendInviteMessage(gm, player);
             }
         });
@@ -283,7 +269,7 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner,
 
         StringBuilder builder = new StringBuilder();
         builder.append("&c").append(player.getName()).append(" &6がゲーム参加の要求を送信しています。\n");
-        builder.append("ゲームに参加するなら &c/mg join ").append(playerIDs.get(gameMaker.getHostplayer()))
+        builder.append("ゲームに参加するなら &c/mg join ").append(plugin.getPlayerNo(gameMaker.getHostplayer()))
                 .append(" &6を使用してください。\n");
 
         gameMaker.sendMessage(player.getName(), builder.toString());
@@ -337,7 +323,9 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner,
         GameMaker gameMaker = getGameMaker(player);
         if (gameMaker != null) {
             if(gameMaker.isInGame()) {
-                gameMaker.cancel();
+                if(gameMaker.cancel()){
+                    gameMaker.showTitle("ゲーム中止！", "");
+                }
             }else{
                 player.sendMessage("ゲームがスタートしていないのでキャンセルは必要ないです");
             }
@@ -364,7 +352,6 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner,
         return null;
     }
 
-    @Override
     public void onLogin(Player player) {
         GameMaker gameMaker = getJoiningGame(player.getName());
         if (gameMaker != null) {
@@ -375,12 +362,5 @@ public class GameCommandExecutor implements CommandExecutor, PlayerEventListner,
                 player.setScoreboard(gameMaker.getScoreboard());
             }
         }
-
     }
-
-    @Override
-    public void onLogout(Player player) {
-
-    }
-
 }

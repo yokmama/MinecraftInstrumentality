@@ -3,10 +3,7 @@ package jp.minecraftday.minecraftinstrumentality;
 import jp.minecraftday.minecraftinstrumentality.command.*;
 import jp.minecraftday.minecraftinstrumentality.plugin.DiscordSRVHandler;
 import jp.minecraftday.minecraftinstrumentality.plugin.EssentialsHandler;
-import jp.minecraftday.minecraftinstrumentality.utils.Configuration;
-import jp.minecraftday.minecraftinstrumentality.utils.KanaConverter;
-import jp.minecraftday.minecraftinstrumentality.utils.TextRawGenerator;
-import jp.minecraftday.minecraftinstrumentality.utils.UserConfiguration;
+import jp.minecraftday.minecraftinstrumentality.utils.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
@@ -23,10 +20,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class Main extends JavaPlugin implements Listener {
     GameCommandExecutor gameCommandExecutor;
     UserConfiguration userConfiguration;
+    static AtomicInteger counter = new AtomicInteger();
+    static Map<String, Integer> playerIDs = new ConcurrentHashMap<>();
 
     private JavaPlugin discordSRV = null;
     private JavaPlugin essentials = null;
@@ -50,7 +52,9 @@ public final class Main extends JavaPlugin implements Listener {
             discordSRV = (JavaPlugin) srv;
         }
 
+        //イベントリスナー登録
         getServer().getPluginManager().registerEvents(this, this);
+        //コマンド登録
         getCommand("md").setExecutor(new MainCommandExecutor(this));
         getCommand("minigame").setExecutor(gameCommandExecutor);
         getCommand("setitem").setExecutor(new SetItemNameCommandExecutor(this));
@@ -76,6 +80,12 @@ public final class Main extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onLogin(PlayerJoinEvent event) {
+        Integer playerID = playerIDs.get(event.getPlayer().getName());
+        if (playerID == null) {
+            playerID = counter.incrementAndGet();
+            playerIDs.put(event.getPlayer().getName(), playerID);
+        }
+
         String msg = getConfig().getString("welcome.message");
         if (msg == null) msg = "";
 
@@ -153,6 +163,12 @@ public final class Main extends JavaPlugin implements Listener {
             new DiscordSRVHandler(discordSRV).processChatMessage(sender, msg, false);
         }
 
+    }
+
+    public Integer getPlayerNo(String name){
+        Integer playerID = playerIDs.get(name);
+        if (playerID == null) return null;
+        return playerID;
     }
 
     public Boolean isMuted(Player player) {

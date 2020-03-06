@@ -21,6 +21,7 @@ public class GameMaker implements Runnable {
     private static final String OBJECTIVE_NAME = "minecraftday.mg";
     private GameCommandExecutor gameCommandExecutor;
     private Scoreboard scoreboard;
+    private Objective sidebar;
     final String hostplayer;
     final Set<String> players = new HashSet<>();
     Future future;
@@ -33,7 +34,7 @@ public class GameMaker implements Runnable {
         this.gameCommandExecutor = gameCommandExecutor;
         this.hostplayer = hostplayer.getName();
         this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        Objective sidebar = scoreboard.registerNewObjective(OBJECTIVE_NAME, "dummy", "");
+        sidebar = scoreboard.registerNewObjective(OBJECTIVE_NAME, "dummy", "");
         sidebar.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         hostplayer.setScoreboard(scoreboard);
@@ -52,10 +53,7 @@ public class GameMaker implements Runnable {
             name.append(String.format("制限時間:%02d:00", time));
         }
 
-        Objective obj = scoreboard.getObjective(OBJECTIVE_NAME);
-        if ( obj != null ) {
-            obj.setDisplayName(name.toString());
-        }
+        sidebar.setDisplayName(name.toString());
     }
 
     public void setTime(int time) {
@@ -67,11 +65,8 @@ public class GameMaker implements Runnable {
 
     public Set<String> getPlayers(){ return players;}
 
-    public Scoreboard getScoreboard(){ return scoreboard;}
-
     public void addPlayer(Player player){
-        Objective obj = scoreboard.getObjective(OBJECTIVE_NAME);
-        getScoreItem(obj, player.getName()).setScore(1);
+        sidebar.getScore(player.getName()).setScore(1);
 
         this.players.add(player.getName());
 
@@ -82,8 +77,9 @@ public class GameMaker implements Runnable {
         this.players.remove(player.getName());
 
         removeScores(player.getName());
-        if(!player.getName().equals(hostplayer))
+        if(!player.getName().equals(hostplayer)){
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+        }
     }
 
     @SuppressWarnings("deprecation")
@@ -103,10 +99,7 @@ public class GameMaker implements Runnable {
     }
 
     public void setScoreItem(String name, int setNo) {
-        Objective obj = scoreboard.getObjective(OBJECTIVE_NAME);
-        getScoreItem(obj, name).setScore(setNo);
-
-        //scoreboard.getScores(name).forEach(score -> score.setScore(setNo));
+        sidebar.getScore(name).setScore(setNo);
     }
 
     public String getHostplayer() {
@@ -124,13 +117,15 @@ public class GameMaker implements Runnable {
         return false;
     }
 
-    public void cancel() {
+    public boolean cancel() {
+        cancel = true;
         if (future != null) {
             future.cancel(true);
             future = null;
-            showTitle("ゲーム中止！", "");
+
+            return true;
         }
-        cancel = true;
+        return false;
     }
 
     public void finish() {
@@ -157,7 +152,7 @@ public class GameMaker implements Runnable {
 
     public void end() {
         showTitle("ゲーム終了", "");
-        cancel();
+        finish();
     }
 
     public void gather() {
@@ -234,5 +229,9 @@ public class GameMaker implements Runnable {
             logger.info("Interrupted - "
                     + Thread.currentThread().getId());
         }
+    }
+
+    public Scoreboard getScoreboard() {
+        return scoreboard;
     }
 }
