@@ -13,40 +13,12 @@ commands:
   minigame:
     description: mini game
     aliases: mg
-    usage: "Usage: /<command> [set|start|invite|list|cancel|join|gather|finish]"
+    usage: "Usage: /<command> [set|start|invite|kick|list|cancel|join|leave|gather|no|finish]"
     permission: minecraftday.mg
     permission-message: You dont't have <permission>
-  minigame set:
-    description: game settings
-    permission: minecraftday.mg
-    usage: "Usage: /<command> min"
-  minigame start:
-    description: start game
-    permission: minecraftday.mg
-    usage: "Usage: /<command>"
-  minigame invite:
-    description: invite game
-    permission: minecraftday.mg
-    usage: "Usage: /<command> player name"
-  minigame list:
-    description: list of players
-    permission: minecraftday.mg
-    usage: "Usage: /<command>"
-  minigame cancel:
-    description: cancel game
-    permission: minecraftday.mg
-    usage: "Usage: /<command>"
-  minigame join:
-    description: join game
-    permission: minecraftday.mg
-    usage: "Usage: /<command> [game no]"
   minigame gather:
     description: gather players
     permission: minecraftday.mg.gather
-    usage: "Usage: /<command>"
-  minigame finish:
-    description: finish game
-    permission: minecraftday.mg
     usage: "Usage: /<command>"
   setitem:
     usage: "Usage: /<command> [name|lore]"

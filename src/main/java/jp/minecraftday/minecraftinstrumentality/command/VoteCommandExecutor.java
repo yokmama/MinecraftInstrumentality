@@ -1,5 +1,6 @@
 package jp.minecraftday.minecraftinstrumentality.command;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import jp.minecraftday.minecraftinstrumentality.Main;
 import jp.minecraftday.minecraftinstrumentality.Threading;
 import org.bukkit.Bukkit;
@@ -128,14 +129,21 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(target!=null) {
-            vote(player, new VoteTask(player, target, args[0]+" をおくちチャックする", 3, true) {
-                @Override
-                void execute() {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mute "+args[0]);
+            Boolean isMuted = plugin.isMuted(target);
+            if(isMuted!=null) {
+                if (!isMuted) {
+                    vote(player, new VoteTask(player, target, args[0] + " をおくちチャックする", 3, true) {
+                        @Override
+                        void execute() {
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "mute " + args[0]);
+                        }
+                    });
+                } else {
+                    player.sendMessage("そのプレイヤーはしゃべれません");
                 }
-            });
+            }
         }else{
-            player.sendMessage("対象のプレイヤーがいません");
+            player.sendMessage("そのプレイヤーはいません");
         }
     }
 
@@ -146,14 +154,21 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(target!=null) {
-            vote(player, new VoteTask(player, target, args[0]+" をしゃべれるようにする", true) {
-                @Override
-                void execute() {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "unmute "+args[0]);
+            Boolean isMuted = plugin.isMuted(target);
+            if(isMuted!=null) {
+                if (isMuted) {
+                    vote(player, new VoteTask(player, target, args[0] + " をしゃべれるようにする", true) {
+                        @Override
+                        void execute() {
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "unmute " + args[0]);
+                        }
+                    });
+                } else {
+                    player.sendMessage("そのプレイヤーはしゃべれます");
                 }
-            });
+            }
         }else{
-            player.sendMessage("対象のプレイヤーがいません");
+            player.sendMessage("そのプレイヤーはいません");
         }
     }
 
@@ -164,15 +179,22 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(target!=null) {
-            vote(player, new VoteTask(player, target, args[0]+" をろうやに入れる", 3, true) {
-                @Override
-                void execute() {
-                    String jailname = plugin.getConfig().getString("vote.jailname");
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "jail "+args[0] + " " + jailname + " 30m");
+            Boolean isJailed = plugin.isJailed(target);
+            if(isJailed!=null) {
+                if (!isJailed) {
+                    vote(player, new VoteTask(player, target, args[0] + " をろうやに入れる", 3, true) {
+                        @Override
+                        void execute() {
+                            String jailname = plugin.getConfig().getString("vote.jailname");
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "jail " + args[0] + " " + jailname + " 30m");
+                        }
+                    });
+                } else {
+                    player.sendMessage("そのプレイヤーはろうやにいます");
                 }
-            });
+            }
         }else{
-            player.sendMessage("対象のプレイヤーがいません");
+            player.sendMessage("そのプレイヤーはいません");
         }
     }
 
@@ -181,16 +203,22 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         if(args.length>0){
             target = Bukkit.getPlayerExact(args[0]);
         }
-
         if(target!=null) {
-            vote(player, new VoteTask(player, target, args[0]+" をろうやから出す", true) {
-                @Override
-                void execute() {
-                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "unjail "+args[0]);
+            Boolean isJailed = plugin.isJailed(target);
+            if(isJailed!=null) {
+                if (isJailed) {
+                    vote(player, new VoteTask(player, target, args[0] + " をろうやから出す", true) {
+                        @Override
+                        void execute() {
+                            Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "unjail " + args[0]);
+                        }
+                    });
+                } else {
+                    player.sendMessage("そのプレイヤーはろうやにいません");
                 }
-            });
+            }
         }else{
-            player.sendMessage("対象のプレイヤーがいません");
+            player.sendMessage("そのプレイヤーはいません");
         }
     }
 
@@ -201,6 +229,8 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
                 currentTask.cancel();
                 currentTask.run();
             }
+        }else{
+            player.sendMessage("投票がありません");
         }
     }
 
@@ -211,8 +241,9 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
                 currentTask.cancel();
                 currentTask.run();
             }
+        }else{
+            player.sendMessage("投票がありません");
         }
-
     }
 
     private void vote(Player player, VoteTask task) {

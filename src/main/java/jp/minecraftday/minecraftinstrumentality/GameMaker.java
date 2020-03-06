@@ -60,6 +60,8 @@ public class GameMaker implements Runnable {
 
     public void setTime(int time) {
         this.time = time;
+        this.startedTime = 0;
+        this.cancel = false;
         updateSidebarName();
     }
 
@@ -80,8 +82,8 @@ public class GameMaker implements Runnable {
         this.players.remove(player.getName());
 
         removeScores(player.getName());
-
-        player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+        if(!player.getName().equals(hostplayer))
+            player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
     }
 
     @SuppressWarnings("deprecation")
@@ -98,6 +100,13 @@ public class GameMaker implements Runnable {
             name = name.substring(0, 16);
         }
         scoreboard.resetScores(name);
+    }
+
+    public void setScoreItem(String name, int setNo) {
+        Objective obj = scoreboard.getObjective(OBJECTIVE_NAME);
+        getScoreItem(obj, name).setScore(setNo);
+
+        //scoreboard.getScores(name).forEach(score -> score.setScore(setNo));
     }
 
     public String getHostplayer() {
@@ -119,16 +128,25 @@ public class GameMaker implements Runnable {
         if (future != null) {
             future.cancel(true);
             future = null;
+            showTitle("ゲーム中止！", "");
         }
         cancel = true;
+    }
+
+    public void finish() {
+        cancel();
 
         players.stream().forEach(playerName->{
             scoreboard.resetScores(playerName);
             Player player = Bukkit.getPlayerExact(playerName);
             if (player != null) {
                 player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+                sendMessage(player.getName(), "&6ゲームを解散しました");
             }
         });
+        if(!isJoining(hostplayer)){
+            sendMessage(hostplayer, "&6ゲームを解散しました");
+        }
     }
 
 
@@ -217,5 +235,4 @@ public class GameMaker implements Runnable {
                     + Thread.currentThread().getId());
         }
     }
-
 }

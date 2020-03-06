@@ -1,16 +1,14 @@
 package jp.minecraftday.minecraftinstrumentality;
 
-import com.earth2me.essentials.Essentials;
-import com.earth2me.essentials.IEssentials;
-import com.earth2me.essentials.User;
-import com.earth2me.essentials.perm.PermissionsHandler;
-import github.scarsz.discordsrv.DiscordSRV;
-import github.scarsz.discordsrv.dependencies.jda.core.entities.PermissionOverride;
 import jp.minecraftday.minecraftinstrumentality.command.*;
+import jp.minecraftday.minecraftinstrumentality.plugin.DiscordSRVHandler;
+import jp.minecraftday.minecraftinstrumentality.plugin.EssentialsHandler;
 import jp.minecraftday.minecraftinstrumentality.utils.Configuration;
 import jp.minecraftday.minecraftinstrumentality.utils.KanaConverter;
-import jp.minecraftday.minecraftinstrumentality.utils.TellRawGenerator;
+import jp.minecraftday.minecraftinstrumentality.utils.TextRawGenerator;
 import jp.minecraftday.minecraftinstrumentality.utils.UserConfiguration;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -19,19 +17,19 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.plugin.PluginLogger;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public final class Main extends JavaPlugin implements Listener {
     GameCommandExecutor gameCommandExecutor;
     UserConfiguration userConfiguration;
 
-    private DiscordSRV discordSRV = null;
-    private Essentials essentials = null;
+    private JavaPlugin discordSRV = null;
+    private JavaPlugin essentials = null;
 
     @Override
     public void onEnable() {
@@ -41,12 +39,16 @@ public final class Main extends JavaPlugin implements Listener {
 
         userConfiguration = new UserConfiguration(getDataFolder());
 
-        Essentials ess = getPlugin(Essentials.class);
-        if (ess!=null && !ess.isEnabled()) {
-            essentials = ess;
+        final PluginManager pluginManager = getServer().getPluginManager();
+        Plugin ess = pluginManager.getPlugin("Essentials");
+        if (ess != null && !ess.isEnabled()) {
+            essentials = (JavaPlugin) ess;
         }
 
-        discordSRV = DiscordSRV.getPlugin();
+        Plugin srv = pluginManager.getPlugin("DiscordSRV");
+        if (srv != null && !srv.isEnabled()) {
+            discordSRV = (JavaPlugin) srv;
+        }
 
         getServer().getPluginManager().registerEvents(this, this);
         getCommand("md").setExecutor(new MainCommandExecutor(this));
@@ -56,12 +58,14 @@ public final class Main extends JavaPlugin implements Listener {
         getCommand("vote").setExecutor(vote);
         getCommand("voteyes").setExecutor(vote);
         getCommand("voteno").setExecutor(vote);
-        getCommand("hiragana").setExecutor(new TranslateCommandExecutor(this));
+
+        ChatCommandExecutor chat = new ChatCommandExecutor(this);
+        getCommand("hiragana").setExecutor(chat);
 
         saveDefaultConfig();
     }
 
-    public Configuration getUserConfiguration(Player player){
+    public Configuration getUserConfiguration(Player player) {
         return userConfiguration.getUserConfig(player);
     }
 
@@ -95,40 +99,69 @@ public final class Main extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onChat(AsyncPlayerChatEvent event) {
         event.setCancelled(true);
-
-        String fixString = event.getMessage();
-        Configuration configuration = getUserConfiguration(event.getPlayer());
-        boolean hiragana = configuration.getBoolean("hiragana");
-        if(hiragana) {
-            fixString = KanaConverter.conv(fixString);
-        }
-
-        PermissionsHandler handler = essentials.getPermissionsHandler();
-
-        //Gm yokmama »
-        TellRawGenerator builder = new TellRawGenerator();
-        builder.append(handler.getPrefix(event.getPlayer())+" ", true);
-        builder.append(event.getPlayer().getDisplayName(), true, event.getPlayer().getName());
-        builder.append("&f>");
-        builder.append(fixString);
-
-        String msg = builder.toString();
-        event.getPlayer().getWorld().getPlayers().forEach(p->{
-            StringBuilder buf = new StringBuilder();
-            buf.append("tellraw ").append(p.getName()).append(" ").append(msg);
-
-            Threading.postToServerThread(new Threading.Task(this) {
-                @Override
-                public void execute() {
-                    p.performCommand(buf.toString());
-                }
-            });
-
-        });
-
-        if(discordSRV!=null) {
-            discordSRV.processChatMessage(event.getPlayer(), fixString, DiscordSRV.getPlugin().getChannels().size() == 1 ? null : "global", false);
-        }
+        broadcastMessage(event.getPlayer(), event.getMessage(), true);
     }
 
+    public void broadcastMessage(Player sender, String msg, boolean allworld) {
+        Configuration configuration = getUserConfiguration(sender);
+        boolean hiragana = configuration.getBoolean("hiragana");
+        if (hiragana) {
+            msg = KanaConverter.conv(msg);
+        }
+
+        boolean useRaw = false;
+
+        final String fixedMsg;
+        if(useRaw){
+            //ex: Gm yokmama »
+            TextRawGenerator builder = new TextRawGenerator();
+            if (essentials != null) {
+                builder.append(new EssentialsHandler(essentials).getPrefix(sender) + " ", true);
+            }
+            builder.append(sender.getDisplayName(), true, sender.getName());
+            builder.append("&f>");
+            builder.append(msg);
+            fixedMsg = builder.toString();
+        }else {
+            StringBuilder builder = new StringBuilder();
+
+            if (essentials != null) {
+                builder.append(new EssentialsHandler(essentials).getPrefix(sender) + " ");
+            }
+            builder.append(sender.getDisplayName());
+            builder.append("&f>");
+            builder.append(msg);
+            fixedMsg = ChatColor.translateAlternateColorCodes('&',builder.toString());
+        }
+        Collection<? extends Player> players = allworld ? Bukkit.getOnlinePlayers() : sender.getWorld().getPlayers();
+        players.forEach(p -> {
+            if (useRaw) {
+                StringBuilder buf = new StringBuilder();
+                buf.append("tellraw ").append(p.getName()).append(" ").append(fixedMsg);
+                Threading.postToServerThread(new Threading.Task(this) {
+                    @Override
+                    public void execute() {
+                        p.performCommand(buf.toString());
+                    }
+                });
+            } else {
+                p.sendMessage(fixedMsg);
+            }
+        });
+
+        if (discordSRV != null) {
+            new DiscordSRVHandler(discordSRV).processChatMessage(sender, msg, false);
+        }
+
+    }
+
+    public Boolean isMuted(Player player) {
+        if (essentials != null) return new EssentialsHandler(essentials).isMuted(player);
+        return null;
+    }
+
+    public Boolean isJailed(Player player) {
+        if (essentials != null) return new EssentialsHandler(essentials).isJailed(player);
+        return null;
+    }
 }
