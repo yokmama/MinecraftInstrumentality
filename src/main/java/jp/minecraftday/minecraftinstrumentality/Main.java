@@ -1,5 +1,6 @@
 package jp.minecraftday.minecraftinstrumentality;
 
+import com.earth2me.essentials.perm.PermissionsHandler;
 import jp.minecraftday.minecraftinstrumentality.command.*;
 import jp.minecraftday.minecraftinstrumentality.plugin.DiscordSRVHandler;
 import jp.minecraftday.minecraftinstrumentality.plugin.EssentialsHandler;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public final class Main extends JavaPlugin implements Listener {
     GameCommandExecutor gameCommandExecutor;
@@ -43,12 +45,12 @@ public final class Main extends JavaPlugin implements Listener {
 
         final PluginManager pluginManager = getServer().getPluginManager();
         Plugin ess = pluginManager.getPlugin("Essentials");
-        if (ess != null && !ess.isEnabled()) {
+        if (ess != null){// && ess.isEnabled()) {
             essentials = (JavaPlugin) ess;
         }
 
         Plugin srv = pluginManager.getPlugin("DiscordSRV");
-        if (srv != null && !srv.isEnabled()) {
+        if (srv != null){// && srv.isEnabled()) {
             discordSRV = (JavaPlugin) srv;
         }
 
@@ -65,6 +67,7 @@ public final class Main extends JavaPlugin implements Listener {
 
         ChatCommandExecutor chat = new ChatCommandExecutor(this);
         getCommand("hiragana").setExecutor(chat);
+        getCommand("shout").setExecutor(chat);
 
         saveDefaultConfig();
     }
@@ -109,18 +112,36 @@ public final class Main extends JavaPlugin implements Listener {
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onChat(AsyncPlayerChatEvent event) {
         event.setCancelled(true);
-        broadcastMessage(event.getPlayer(), event.getMessage(), true);
+        broadcastMessage(event.getPlayer(), event.getMessage(), false);
     }
 
-    public void broadcastMessage(Player sender, String msg, boolean allworld) {
+    public void broadcastMessage(Player sender, String msg, boolean isShout) {
         Configuration configuration = getUserConfiguration(sender);
-        boolean hiragana = configuration.getBoolean("hiragana");
+        boolean hiragana = configuration!=null?configuration.getBoolean("hiragana"): false;
         if (hiragana) {
             msg = KanaConverter.conv(msg);
         }
 
-        boolean useRaw = false;
+        String color = "&f";
+        final Collection<? extends Player> players;
+        if (essentials != null) color = new EssentialsHandler(essentials).getChatColor(sender);
+        if(isShout) {
+            color = "&c";
+            players = Bukkit.getOnlinePlayers();
+        } else {
+            final GameMaker hostGame = gameCommandExecutor.getGameMaker(sender);
+            final GameMaker joinGame = gameCommandExecutor.getJoiningGame(sender.getName());
+            if(hostGame != null){
+                color = "&a";
+            }
 
+            players = Bukkit.getOnlinePlayers().stream().filter(pl->{
+                if(hostGame !=null || joinGame !=null) return joinGame.isJoining(pl.getName());
+                else return gameCommandExecutor.getJoiningGame(pl.getName()) == null;
+            }).collect(Collectors.toList());
+        }
+
+        boolean useRaw = false; //ホバーで名前を表示するメッセージは一度やってみたけど微妙だったのでフラグでオフにしています
         final String fixedMsg;
         if(useRaw){
             //ex: Gm yokmama »
@@ -129,7 +150,7 @@ public final class Main extends JavaPlugin implements Listener {
                 builder.append(new EssentialsHandler(essentials).getPrefix(sender) + " ", true);
             }
             builder.append(sender.getDisplayName(), true, sender.getName());
-            builder.append("&f>");
+            builder.append(color+">");
             builder.append(msg);
             fixedMsg = builder.toString();
         }else {
@@ -139,11 +160,11 @@ public final class Main extends JavaPlugin implements Listener {
                 builder.append(new EssentialsHandler(essentials).getPrefix(sender) + " ");
             }
             builder.append(sender.getDisplayName());
-            builder.append("&f>");
+            builder.append(color+">");
             builder.append(msg);
             fixedMsg = ChatColor.translateAlternateColorCodes('&',builder.toString());
         }
-        Collection<? extends Player> players = allworld ? Bukkit.getOnlinePlayers() : sender.getWorld().getPlayers();
+
         players.forEach(p -> {
             if (useRaw) {
                 StringBuilder buf = new StringBuilder();

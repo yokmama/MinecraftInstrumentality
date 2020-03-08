@@ -24,4 +24,12 @@ public class EssentialsHandler {
         return essentials.getUser(player).isJailed();
     }
 
+    public String getChatColor(Player player){
+        PermissionsHandler handler = essentials.getPermissionsHandler();
+        String grp = handler.getGroup(player);
+        if(grp.equals("gm")) return "&6";
+        else if(grp.equals("sensei")) return "&6";
+        return "&f";
+    }
+
 }

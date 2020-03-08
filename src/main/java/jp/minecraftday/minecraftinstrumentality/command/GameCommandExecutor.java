@@ -36,10 +36,18 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
         return pool.isShutdown();
     }
 
-    private GameMaker getGameMaker(Player player) {
+    public GameMaker getGameMaker(Player player) {
         Integer playerID = plugin.getPlayerNo(player.getName());
         if (playerID == null) return null;
         return games.get(playerID);
+    }
+
+    public GameMaker getJoiningGame(String player) {
+        for (GameMaker g : games.values()) {
+            if (g.isJoining(player))
+                return g;
+        }
+        return null;
     }
 
     public void remove(String playerName) {
@@ -146,7 +154,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
 
         final GameMaker gm = gameMaker;
         hostplayer.getWorld().getPlayers().forEach(player -> {
-            if (player.getLocation().distance(hostplayer.getLocation()) <  32) {
+            if (player.getLocation().distance(hostplayer.getLocation()) <  32 && getJoiningGame(player.getName()) == null) {
                 sendInviteMessage(gm, player);
             }
         });
@@ -234,12 +242,19 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
             return;
         }
 
+        int sent = 0;
         for (String playerName : cmds) {
             Player invitePlayer = Bukkit.getPlayerExact(playerName);
             if (invitePlayer != null) {
                 sendInviteMessage(gameMaker, invitePlayer);
+                sent++;
             }
         }
+
+        if(sent>0)
+            player.sendMessage("招待を"+sent+"件送りました");
+        else
+            player.sendMessage("招待を送る相手がいませんでした");
     }
 
     private void kickPlayer(Player player, String[] cmds) {
@@ -342,14 +357,6 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
         } else {
             player.sendMessage("あなたはゲーム作成者ではありません");
         }
-    }
-
-    private GameMaker getJoiningGame(String player) {
-        for (GameMaker g : games.values()) {
-            if (g.isJoining(player))
-                return g;
-        }
-        return null;
     }
 
     public void onLogin(Player player) {

@@ -2,7 +2,9 @@ name: MinecraftDay
 version: @version@
 main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
-softdepend: [EssentialsX, discordsrv]
+depend: [Essentials]
+softdepend: [discordsrvs]
+
 
 commands:
   md:
@@ -48,6 +50,11 @@ commands:
     usage: "Usage: /<command>"
     permission: minecraftday.hiragana
     permission-message: You dont't have <permission>
+  shout:
+    usage: "Usage: /<command>"
+    aliases: s
+    permission: minecraftday.shout
+    permission-message: You dont't have <permission>
 permissions:
   minecraftday.md:
     description: server settings permission
@@ -78,4 +85,7 @@ permissions:
     default: true
   minecraftday.hiragana:
     description: hiragana command permission
+    default: true
+  minecraftday.shout:
+    description: shout command permission
     default: true

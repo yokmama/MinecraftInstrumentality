@@ -191,15 +191,6 @@ public class GameMaker implements Runnable {
         }
     }
 
-    public void broadcastMessage(String msg) {
-        for (String p : players) {
-            Player player = Bukkit.getPlayerExact(p);
-            if (player != null) {
-                player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg));
-            }
-        }
-    }
-
     public void sendMessage(String playerName, String msg) {
         Player player = Bukkit.getPlayerExact(playerName);
         if (player != null) {

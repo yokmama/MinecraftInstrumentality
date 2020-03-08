@@ -1,101 +1,91 @@
 name: MinecraftDay
-version: 1.12-SNAPSHOT
+version: 1.17-SNAPSHOT
 main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
+depend: [Essentials]
+softdepend: [discordsrvs]
+
 
 commands:
   md:
-    description: サーバ�?�セ�?�?ィング
-    usage: "使用�?: /<command> [welcome|reload]"
+    description: Server Setting
+    usage: "Usage: /<command> [welcome|reload]"
     permission: minecraftday.md
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   minigame:
-    description: ミニゲー�?
+    description: mini game
     aliases: mg
-    usage: "使用�?: /<command> [set|start|invite|list|cancel|join|gather|finish]"
+    usage: "Usage: /<command> [set|start|invite|kick|list|cancel|join|leave|gather|no|finish]"
     permission: minecraftday.mg
-    permission-message: 使用する権利がありません <permission>
-  minigame set:
-    description: ゲー�?の設�?
-    permission: minecraftday.mg
-    usage: "使用�?: /<command> �?"
-  minigame start:
-    description: ゲー�?スター�?
-    permission: minecraftday.mg
-    usage: "使用�?: /<command>"
-  minigame invite:
-    description: ゲー�?への招�?
-    permission: minecraftday.mg
-    usage: "使用�?: /<command> プレイヤー�?"
-  minigame list:
-    description: ゲー�?の参加�?を表示
-    permission: minecraftday.mg
-    usage: "使用�?: /<command>"
-  minigame cancel:
-    description: ゲー�?キャンセル
-    permission: minecraftday.mg
-    usage: "使用�?: /<command>"
-  minigame join:
-    description: ゲー�?への参加
-    permission: minecraftday.mg
-    usage: "使用�?: /<command> [ゲー�?番号]"
+    permission-message: You dont't have <permission>
   minigame gather:
-    description: プレイヤーの�?�?
+    description: gather players
     permission: minecraftday.mg.gather
-    usage: "使用�?: /<command>"
-  minigame finish:
-    description: ゲー�?から離脱
-    permission: minecraftday.mg
-    usage: "使用�?: /<command>"
+    usage: "Usage: /<command>"
   setitem:
-    usage: "使用�?: /<command> [name|lore]"
+    usage: "Usage: /<command> [name|lore]"
     permission: minecraftday.setitem
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   vote:
-    usage: "使用�?: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
+    usage: "Usage: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
     permission: minecraftday.vote
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   vote jail:
-    usage: "使用�?: /<command> jail"
+    usage: "Usage: /<command> jail"
     permission: minecraftday.vote.jail
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   vote mute:
-    usage: "使用�?: /<command> mute"
+    usage: "Usage: /<command> mute"
     permission: minecraftday.vote.mute
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   voteyes:
-    usage: "使用�?: /<command>"
+    usage: "Usage: /<command>"
     permission: minecraftday.vote.yes
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
   voteno:
-    usage: "使用�?: /<command>"
+    usage: "Usage: /<command>"
     permission: minecraftday.vote.no
-    permission-message: 使用する権利がありません <permission>
+    permission-message: You dont't have <permission>
+  hiragana:
+    usage: "Usage: /<command>"
+    permission: minecraftday.hiragana
+    permission-message: You dont't have <permission>
+  shout:
+    usage: "Usage: /<command>"
+    aliases: s
+    permission: minecraftday.shout
+    permission-message: You dont't have <permission>
 permissions:
   minecraftday.md:
-    description: サーバ�?�設定コマンド�?�パ�?�ミッション
+    description: server settings permission
     default: op
   minecraftday.mg:
-    description: ミニゲー�?コマンド�?�パ�?�ミッション
+    description: minigame permission
     default: true
   minecraftday.mg.gather:
-    description: �?合コマンド�?�パ�?�ミッション
+    description: gather command permission
     default: op
   minecraftday.setitem:
-    description: アイ�?�?名設定コマンド�?�パ�?�ミッション
+    description: itemname command permission
     default: true
   minecraftday.vote:
-    description: 投票コマンド�?�パ�?�ミッション
+    description: vote command permission
     default: true
   minecraftday.vote.jail:
-    description: 投獄コマンド�?�パ�?�ミッション
+    description: jail command permission
     default: op
   minecraftday.vote.mute:
-    description: 無�?コマンド�?�パ�?�ミッション
+    description: mute command permission
     default: op
   minecraftday.vote.yes:
-    description: �?�?ねのパ�?�ミッション
+    description: voteyes command permission
     default: true
   minecraftday.vote.no:
-    description: �?め�?�パ�?�ミッション
+    description: voteno command permission
+    default: true
+  minecraftday.hiragana:
+    description: hiragana command permission
+    default: true
+  minecraftday.shout:
+    description: shout command permission
     default: true

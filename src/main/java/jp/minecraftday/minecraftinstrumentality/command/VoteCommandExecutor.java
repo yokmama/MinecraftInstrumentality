@@ -1,6 +1,5 @@
 package jp.minecraftday.minecraftinstrumentality.command;
 
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import jp.minecraftday.minecraftinstrumentality.Main;
 import jp.minecraftday.minecraftinstrumentality.Threading;
 import org.bukkit.Bukkit;

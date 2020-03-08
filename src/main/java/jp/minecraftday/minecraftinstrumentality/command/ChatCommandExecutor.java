@@ -5,9 +5,15 @@ import jp.minecraftday.minecraftinstrumentality.utils.Configuration;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
-public class ChatCommandExecutor implements CommandExecutor {
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+public class ChatCommandExecutor implements CommandExecutor, TabExecutor {
     final Main plugin;
     public ChatCommandExecutor(Main main) {
         this.plugin = main;
@@ -18,8 +24,21 @@ public class ChatCommandExecutor implements CommandExecutor {
         if(command.getName().equalsIgnoreCase("hiragana") && sender instanceof Player) {
             toggleHiragana((Player) sender);
             return true;
+        }else  if(command.getName().equalsIgnoreCase("shout") && sender instanceof Player) {
+                shout((Player) sender, args);
+                return true;
         }
         return false;
+    }
+
+    private void shout(Player sender, String[] args) {
+        StringBuilder builder = new StringBuilder();
+        Arrays.stream(args).forEach(s-> {
+            if(builder.length()>0)builder.append(" ");
+            builder.append(s);
+        });
+
+        plugin.broadcastMessage(sender.getPlayer(), builder.toString(), true);
     }
 
     private void toggleHiragana(Player player) {
@@ -32,5 +51,10 @@ public class ChatCommandExecutor implements CommandExecutor {
             player.sendMessage("ひらがな自動変換モードをオフにしました");
         }
         configuration.save();
+    }
+
+    @Override
+    public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
+        return new ArrayList<>();
     }
 }
