@@ -19,7 +19,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
     final Main plugin;
     static AtomicInteger ids = new AtomicInteger();
     final ExecutorService pool;
-    static Map<Integer, GameMaker> games = new ConcurrentHashMap<>();
+    static Map<String, GameMaker> games = new ConcurrentHashMap<>();
 
 
     public GameCommandExecutor(Main ref) {
@@ -37,9 +37,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
     }
 
     public GameMaker getGameMaker(Player player) {
-        Integer playerID = plugin.getPlayerNo(player.getName());
-        if (playerID == null) return null;
-        return games.get(playerID);
+        return games.get(player.getName());
     }
 
     public GameMaker getJoiningGame(String player) {
@@ -51,8 +49,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
     }
 
     public void remove(String playerName) {
-        Integer playerID = plugin.getPlayerNo(playerName);
-        games.remove(playerID);
+        games.remove(playerName);
     }
 
 
@@ -91,33 +88,61 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (command.getName().equals("minigame")) {
-            List<String> list = new ArrayList(Arrays.asList("set", "join"));
-
-            GameMaker hostingGame = getGameMaker((Player)sender);
-            if(hostingGame!=null){
-                list.add("start");
-                list.add("kick");
-                list.add("gather");
-                if(hostingGame.isInGame()) {
-                    list.add("cancel");
+            if(args.length < 2) {
+                List<String> list = new ArrayList(Arrays.asList("set", "join"));
+                GameMaker hostingGame = getGameMaker((Player) sender);
+                if (hostingGame != null) {
+                    list.add("start");
+                    list.add("kick");
+                    list.add("gather");
+                    if (hostingGame.isInGame()) {
+                        list.add("cancel");
+                    }
+                    list.add("finish");
                 }
-                list.add("finish");
-            }
 
-            GameMaker gameMaker = getJoiningGame(sender.getName());
-            if(gameMaker != null || hostingGame!=null){
-                list.add("invite");
-                list.add("list");
-                list.add("leave");
-                list.add("no");
-            }
+                GameMaker gameMaker = getJoiningGame(sender.getName());
+                if (gameMaker != null || hostingGame != null) {
+                    list.add("invite");
+                    list.add("list");
+                    list.add("leave");
+                    list.add("no");
+                }
+                if (args.length == 0 || args[0].length() == 0) {
+                    return list;
+                } else if (args.length == 1) {
+                    for (String s : list) {
+                        if (s.startsWith(args[0])) return Collections.singletonList(s);
+                    }
+                }
+            }else {
+                List<String> list = new ArrayList();
+                String cmd0 = args[0].toLowerCase();
+                if(cmd0.equals("join")){
+                    //現在登録参加できるゲーム
+                    games.values().stream().forEach(g->list.add(g.getHostplayer()));
+                }else if(cmd0.equals("invite")){
+                    //自分に所属していないプレイヤー
+                    Bukkit.getOnlinePlayers().stream().forEach(pl->{
+                        if(getJoiningGame(pl.getName()) == null){
+                            list.add(pl.getName());
+                        }
+                    });
+                }else if(cmd0.equals("kick")){
+                    //自分が所属しているゲーム
+                    GameMaker gameMaker = getJoiningGame(sender.getName());
+                    if(gameMaker == null) gameMaker = getGameMaker((Player)sender);
+                    if(gameMaker!=null){
+                        gameMaker.getPlayers().stream().forEach(s -> list.add(s));
+                    }
+                }
 
-
-            if (args.length == 0 || args[0].length() == 0) {
-                return list;
-            } else if (args.length == 1) {
-                for (String s : list) {
-                    if (s.startsWith(args[0])) return Collections.singletonList(s);
+                if (args[1].length() == 0) {
+                    return list;
+                } else if (args.length == 1) {
+                    for (String s : list) {
+                        if (s.startsWith(args[0])) return Collections.singletonList(s);
+                    }
                 }
             }
         }
@@ -125,9 +150,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
     }
 
     private void setGame(Player hostplayer, String[] cmds) {
-        final Integer playerID = plugin.getPlayerNo(hostplayer.getName());
-
-        GameMaker gameMaker = games.get(playerID);
+        GameMaker gameMaker = games.get(hostplayer.getName());
         if (gameMaker != null && gameMaker.isInGame()) {
             hostplayer.sendMessage("すでにゲームがスタートしています。一度キャンセルしましょう");
             return;
@@ -159,21 +182,15 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
             }
         });
 
-        games.put(playerID, gameMaker);
+        games.put(hostplayer.getName(), gameMaker);
     }
 
     private void joinGame(Player player, String[] cmds) {
         if (cmds.length == 0) {
-            player.sendMessage("ゲーム番号を入力してください");
+            player.sendMessage("ゲーム作成者を入力してください");
         }
 
-        int gameID = -1;
-        try {
-            gameID = Integer.parseInt(cmds[0]);
-        } catch (Exception e) {
-            player.sendMessage("番号が数字ではありません");
-            return;
-        }
+        String gameID = cmds[0];
 
         GameMaker gameMaker = games.get(gameID);
         if (gameMaker == null || gameMaker.isInGame()) {
@@ -271,7 +288,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
         for (String playerName : cmds) {
             Player kickPlayer = Bukkit.getPlayerExact(playerName);
             if (kickPlayer != null && hostingGame.isJoining(kickPlayer.getName())) {
-                hostingGame.removePlayer(player);
+                hostingGame.removePlayer(kickPlayer);
                 hostingGame.sendMessage(kickPlayer.getName(), "&6ゲームからキックされました");
                 hostingGame.sendMessage(player.getName(), "&c" + kickPlayer.getName() + "&6をキックしました");
             } else {
@@ -284,7 +301,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
 
         StringBuilder builder = new StringBuilder();
         builder.append("&c").append(player.getName()).append(" &6がゲーム参加の要求を送信しています。\n");
-        builder.append("ゲームに参加するなら &c/mg join ").append(plugin.getPlayerNo(gameMaker.getHostplayer()))
+        builder.append("ゲームに参加するなら &c/mg join ").append(gameMaker.getHostplayer())
                 .append(" &6を使用してください。\n");
 
         gameMaker.sendMessage(player.getName(), builder.toString());
@@ -309,8 +326,11 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
         if (gameMaker!=null) {
             StringBuilder builder = new StringBuilder();
             gameMaker.getPlayers().forEach(p -> builder.append(" ").append(p));
-
-            gameMaker.sendMessage(player.getName(), "&6" + builder.toString());
+            if(builder.length()>0) {
+                gameMaker.sendMessage(player.getName(), "&6" + builder.toString());
+            }else{
+                gameMaker.sendMessage(player.getName(), "&6参加者が１人もいません");
+            }
         } else {
             player.sendMessage("参加しているゲームがありません");
         }
@@ -319,7 +339,11 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
     private void startGame(Player player) {
         GameMaker gameMaker = getGameMaker(player);
         if (gameMaker != null) {
-            gameMaker.start(pool);
+            if(gameMaker.getPlayers().size()>0) {
+                gameMaker.start(pool);
+            }else{
+                gameMaker.sendMessage(player.getName(), "&6参加者が１人もいないためスタートできません");
+            }
         } else {
             player.sendMessage("あなたはゲームの作成者ではありません");
         }

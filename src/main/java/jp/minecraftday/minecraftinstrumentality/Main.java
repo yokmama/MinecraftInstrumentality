@@ -29,8 +29,6 @@ import java.util.stream.Collectors;
 public final class Main extends JavaPlugin implements Listener {
     GameCommandExecutor gameCommandExecutor;
     UserConfiguration userConfiguration;
-    static AtomicInteger counter = new AtomicInteger();
-    static Map<String, Integer> playerIDs = new ConcurrentHashMap<>();
 
     private JavaPlugin discordSRV = null;
     private JavaPlugin essentials = null;
@@ -83,12 +81,6 @@ public final class Main extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onLogin(PlayerJoinEvent event) {
-        Integer playerID = playerIDs.get(event.getPlayer().getName());
-        if (playerID == null) {
-            playerID = counter.incrementAndGet();
-            playerIDs.put(event.getPlayer().getName(), playerID);
-        }
-
         String msg = getConfig().getString("welcome.message");
         if (msg == null) msg = "";
 
@@ -127,7 +119,7 @@ public final class Main extends JavaPlugin implements Listener {
         if (essentials != null) color = new EssentialsHandler(essentials).getChatColor(sender);
         if(isShout) {
             color = "&c";
-            players = Bukkit.getOnlinePlayers();
+            players = null;//Bukkit.getOnlinePlayers();
         } else {
             final GameMaker hostGame = gameCommandExecutor.getGameMaker(sender);
             final GameMaker joinGame = gameCommandExecutor.getJoiningGame(sender.getName());
@@ -136,8 +128,9 @@ public final class Main extends JavaPlugin implements Listener {
             }
 
             players = Bukkit.getOnlinePlayers().stream().filter(pl->{
-                if (hostGame!=null) return hostGame.isJoining(pl.getName());
+                if (sender.getName().equals(pl.getName())) return true;
                 else if (joinGame != null) return joinGame.isJoining(pl.getName());
+                else if (hostGame!=null) return hostGame.isJoining(pl.getName()) || gameCommandExecutor.getJoiningGame(pl.getName()) == null;
                 else return gameCommandExecutor.getJoiningGame(pl.getName()) == null;
             }).collect(Collectors.toList());
         }
@@ -166,31 +159,29 @@ public final class Main extends JavaPlugin implements Listener {
             fixedMsg = ChatColor.translateAlternateColorCodes('&',builder.toString());
         }
 
-        players.forEach(p -> {
-            if (useRaw) {
-                StringBuilder buf = new StringBuilder();
-                buf.append("tellraw ").append(p.getName()).append(" ").append(fixedMsg);
-                Threading.postToServerThread(new Threading.Task(this) {
-                    @Override
-                    public void execute() {
-                        p.performCommand(buf.toString());
-                    }
-                });
-            } else {
-                p.sendMessage(fixedMsg);
-            }
-        });
+        if(players != null) {
+            players.forEach(p -> {
+                if (useRaw) {
+                    StringBuilder buf = new StringBuilder();
+                    buf.append("tellraw ").append(p.getName()).append(" ").append(fixedMsg);
+                    Threading.postToServerThread(new Threading.Task(this) {
+                        @Override
+                        public void execute() {
+                            p.performCommand(buf.toString());
+                        }
+                    });
+                } else {
+                    p.sendMessage(fixedMsg);
+                }
+            });
+        }else{
+            Bukkit.broadcastMessage(fixedMsg);
+        }
 
         if (discordSRV != null) {
             new DiscordSRVHandler(discordSRV).processChatMessage(sender, msg, false);
         }
 
-    }
-
-    public Integer getPlayerNo(String name){
-        Integer playerID = playerIDs.get(name);
-        if (playerID == null) return null;
-        return playerID;
     }
 
     public Boolean isMuted(Player player) {
