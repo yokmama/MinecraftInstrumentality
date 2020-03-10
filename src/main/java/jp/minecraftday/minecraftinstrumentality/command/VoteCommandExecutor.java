@@ -224,6 +224,11 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
     private void voteYes(Player player) {
         if (currentTask != null && currentTask.isVotingRight(player)) {
             currentTask.numSupporters++;
+            currentTask.voters.remove(player.getName());
+            Player sender = Bukkit.getPlayerExact(currentTask.senderName);
+            if(sender!=null){
+                sender.sendMessage(player.getName()+"が投票しました");
+            }
             if (currentTask.isFinish()) {
                 currentTask.cancel();
                 currentTask.run();
@@ -236,6 +241,11 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
     private void voteNo(Player player) {
         if (currentTask != null && currentTask.isVotingRight(player)) {
             currentTask.numOpponents++;
+            currentTask.voters.remove(player.getName());
+            Player sender = Bukkit.getPlayerExact(currentTask.senderName);
+            if(sender!=null){
+                sender.sendMessage(player.getName()+"が投票しました");
+            }
             if (currentTask.isFinish()) {
                 currentTask.cancel();
                 currentTask.run();
@@ -267,6 +277,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
                 builder.append("&c120秒&6以内に答えてね！。 投票をしないといいよ！になるよ。");
                 p.sendMessage(ChatColor.translateAlternateColorCodes('&', builder.toString()));
                 task.numVotersCount++;
+                task.voters.add(p.getName());
             }
         });
 
@@ -295,6 +306,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         int minimumRequired = 0;
         String senderName;
         String targetName = null;
+        Set<String> voters = new HashSet<>();
         boolean isVoteEveryone;
 
         String question = "";
@@ -319,14 +331,11 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         boolean isFinish() {
-            return numVotersCount == (numSupporters + numOpponents);
+            return numVotersCount == 0 || ((double) (numSupporters + numOpponents) / numVotersCount) > 0.8;
         }
 
         boolean isVotingRight(Player p) {
-            if (p.getName().equals(senderName)) return false;
-            if (targetName != null && p.getName().equals(targetName)) return false;
-
-            return true;
+            return voters.contains(p.getName());
         }
 
         abstract void execute();

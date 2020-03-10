@@ -136,7 +136,8 @@ public final class Main extends JavaPlugin implements Listener {
             }
 
             players = Bukkit.getOnlinePlayers().stream().filter(pl->{
-                if(hostGame !=null || joinGame !=null) return joinGame.isJoining(pl.getName());
+                if (hostGame!=null) return hostGame.isJoining(pl.getName());
+                else if (joinGame != null) return joinGame.isJoining(pl.getName());
                 else return gameCommandExecutor.getJoiningGame(pl.getName()) == null;
             }).collect(Collectors.toList());
         }
