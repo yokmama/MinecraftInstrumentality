@@ -62,6 +62,7 @@ public final class Main extends JavaPlugin implements Listener {
         getCommand("vote").setExecutor(vote);
         getCommand("voteyes").setExecutor(vote);
         getCommand("voteno").setExecutor(vote);
+        getCommand("voteauto").setExecutor(vote);
 
         ChatCommandExecutor chat = new ChatCommandExecutor(this);
         getCommand("hiragana").setExecutor(chat);
@@ -111,7 +112,7 @@ public final class Main extends JavaPlugin implements Listener {
         Configuration configuration = getUserConfiguration(sender);
         boolean hiragana = configuration!=null?configuration.getBoolean("hiragana"): false;
         if (hiragana) {
-            msg = KanaConverter.conv(msg);
+            msg = new KanaConverter().convert(msg);
         }
 
         String color = "&f";

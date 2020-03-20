@@ -2,6 +2,8 @@ package jp.minecraftday.minecraftinstrumentality.command;
 
 import jp.minecraftday.minecraftinstrumentality.Main;
 import jp.minecraftday.minecraftinstrumentality.Threading;
+import jp.minecraftday.minecraftinstrumentality.utils.Configuration;
+import jp.minecraftday.minecraftinstrumentality.utils.UserConfiguration;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -54,6 +56,9 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }else if(command.getName().equalsIgnoreCase("voteno") && sender instanceof Player){
             voteNo((Player) sender);
             return true;
+        }else if(command.getName().equalsIgnoreCase("voteauto") && sender instanceof Player){
+            voteAuto((Player) sender, args);
+            return true;
         }
         return false;
     }
@@ -70,6 +75,15 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
                 list.add("mute");
             }
 
+            if (args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if(args.length == 1){
+                for(String s : list){
+                    if(s.startsWith(args[0])) return Collections.singletonList(s);
+                }
+            }
+        } else if (command.getName().equals("voteauto")){
+            List<String> list = new ArrayList(Arrays.asList("yes","no","off"));
             if (args.length == 0 || args[0].length() == 0) {
                 return list;
             } else if(args.length == 1){
@@ -255,6 +269,40 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
     }
 
+    private void voteAuto(Player player, String[] args) {
+        String yesOrNo = "";
+        if(args.length>0){
+            yesOrNo = args[0].toLowerCase();
+        }
+
+        if(!yesOrNo.equals("yes") && !yesOrNo.equals("no") && !yesOrNo.equals("off")){
+            player.sendMessage("Usage: /autovote [yes|no|off]");
+            return;
+        }
+
+        Configuration conf = plugin.getUserConfiguration(player);
+
+        if(yesOrNo.equals("yes")) {
+            player.sendMessage("今後投票は自動でいいね！を返事するようになりました");
+        }else if(yesOrNo.equals("no")){
+            player.sendMessage("今後投票は自動でだめだよ！を返事するようになりました");
+        }else if(yesOrNo.equals("off")){
+            player.sendMessage("今後投票は毎回自分で選択するようになりました");
+        }else if(yesOrNo.equals("")){
+            String now = conf.getString("autovote");
+            if(now.equals("yes"))
+                player.sendMessage("現在自動でいいね！を選択するようになっています");
+            else if(now.equals("no"))
+                player.sendMessage("現在自動でだめだよ！を選択するようになっています");
+            else
+                player.sendMessage("現在自動で選択するようになっていません");
+            return;
+        }
+
+        conf.set("autovote", yesOrNo);
+    }
+
+
     private void vote(Player player, VoteTask task) {
         if (theTimer != null) {
             player.sendMessage("前の投票がおわっていません");
@@ -270,14 +318,31 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
 
         task.getPlayers().forEach(p -> {
             if (!task.senderName.equals(p.getName()) && (task.targetName == null ||!task.targetName.equals(p.getName()))) {
-                StringBuilder builder = new StringBuilder();
-                builder.append("&c").append(player.getName()).append(" &6が「").append(task.question()).append("」の投票を始めました！\n");
-                builder.append("いいよ！に票を入れるには&c/voteyes &6を使って投票しましょう！\n");
-                builder.append("だめだよ！に票を入れるには &c/voteno &6を使って投票しましょう！\n");
-                builder.append("&c120秒&6以内に答えてね！。 投票をしないといいよ！になるよ。");
-                p.sendMessage(ChatColor.translateAlternateColorCodes('&', builder.toString()));
-                task.numVotersCount++;
-                task.voters.add(p.getName());
+                Configuration configuration = plugin.getUserConfiguration(p);
+                String yesOrNo = configuration!=null?configuration.getString("autovote").toLowerCase(): "";
+                if(task.minimumRequired < 3 && yesOrNo!=null && (yesOrNo.equals("yes") || yesOrNo.equals("no"))){
+                    StringBuilder builder = new StringBuilder();
+                    builder.append("&c").append(player.getName()).append(" &6の「").append(task.question()).append("」の投票に\n");
+                    if(yesOrNo.equals("yes")) {
+                        task.numSupporters++;
+                        builder.append("いいよ！に票をいれました！\n");
+                    }
+                    else {
+                        task.numOpponents++;
+                        builder.append("だめだよ！に票をいれました！\n");
+                    }
+                    p.sendMessage(ChatColor.translateAlternateColorCodes('&', builder.toString()));
+                    task.numVotersCount++;
+                }else {
+                    StringBuilder builder = new StringBuilder();
+                    builder.append("&c").append(player.getName()).append(" &6が「").append(task.question()).append("」の投票を始めました！\n");
+                    builder.append("いいよ！に票を入れるには&c/voteyes &6を使って投票しましょう！\n");
+                    builder.append("だめだよ！に票を入れるには &c/voteno &6を使って投票しましょう！\n");
+                    builder.append("&c120秒&6以内に答えてね！。 投票をしないといいよ！になるよ。");
+                    p.sendMessage(ChatColor.translateAlternateColorCodes('&', builder.toString()));
+                    task.numVotersCount++;
+                    task.voters.add(p.getName());
+                }
             }
         });
 

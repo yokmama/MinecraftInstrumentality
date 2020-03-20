@@ -1,5 +1,5 @@
 name: MinecraftDay
-version: 1.17-SNAPSHOT
+version: 1.19-SNAPSHOT
 main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
 depend: [Essentials]

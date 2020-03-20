@@ -25,6 +25,7 @@ public class UserConfiguration {
         if(map.containsKey(uuid)) return map.get(uuid);
 
         Configuration conf = new Configuration(new File(userFolder, uuid+".yml"));
+        conf.load();
         map.put(uuid, conf);
         return conf;
     }

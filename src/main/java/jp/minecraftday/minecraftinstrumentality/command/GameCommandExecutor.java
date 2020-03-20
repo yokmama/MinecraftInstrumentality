@@ -159,6 +159,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         int time;
+        int max = 6; //定員の初期値は6
 
 
         if (cmds.length > 0) {
@@ -168,16 +169,25 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
                 hostplayer.sendMessage("ゲーム時間は数字でいれてください");
                 return;
             }
+            if(cmds.length> 1){
+                try {
+                    max = Integer.parseInt(cmds[1]);
+                } catch (Exception e) {
+                    hostplayer.sendMessage("定員は数字でいれてください");
+                    return;
+                }
+            }
         } else {
-            hostplayer.sendMessage("/mg set 分");
+            hostplayer.sendMessage("/mg set 分 [定員]");
             return;
         }
 
         gameMaker.setTime(time);
+        gameMaker.setMaxPlayer(max);
 
         final GameMaker gm = gameMaker;
         hostplayer.getWorld().getPlayers().forEach(player -> {
-            if (player.getLocation().distance(hostplayer.getLocation()) <  32 && getJoiningGame(player.getName()) == null) {
+            if (player.getLocation().distance(hostplayer.getLocation()) <  64 && getJoiningGame(player.getName()) == null) {
                 sendInviteMessage(gm, player);
             }
         });
@@ -195,6 +205,11 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
         GameMaker gameMaker = games.get(gameID);
         if (gameMaker == null || gameMaker.isInGame()) {
             player.sendMessage("指定されたゲームがないか、すでにスタートしているゲームです");
+            return;
+        }
+
+        if((gameMaker.getPlayers().size()+1)>gameMaker.getMaxPlayer()){
+            player.sendMessage("そのゲームはすでに定員オーバーです");
             return;
         }
 

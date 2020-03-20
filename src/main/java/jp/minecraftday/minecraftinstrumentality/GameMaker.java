@@ -28,6 +28,7 @@ public class GameMaker implements Runnable {
     boolean cancel = false;
     long startedTime;
     int time;
+    int max;
     TitleSender titleSender = new TitleSender();
 
     public GameMaker(GameCommandExecutor gameCommandExecutor, Player hostplayer) {
@@ -61,6 +62,14 @@ public class GameMaker implements Runnable {
         this.startedTime = 0;
         this.cancel = false;
         updateSidebarName();
+    }
+
+    public void setMaxPlayer(int max) {
+        this.max = max;
+    }
+
+    public int getMaxPlayer() {
+        return max;
     }
 
     public Set<String> getPlayers(){ return players;}
@@ -225,4 +234,5 @@ public class GameMaker implements Runnable {
     public Scoreboard getScoreboard() {
         return scoreboard;
     }
+
 }

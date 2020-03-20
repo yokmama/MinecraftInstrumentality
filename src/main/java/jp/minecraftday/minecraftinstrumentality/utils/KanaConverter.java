@@ -5,175 +5,121 @@
  */
 package jp.minecraftday.minecraftinstrumentality.utils;
 
-import java.util.HashMap;
-
 /**
  * ローマ字からかな文字へ変換するクラス
- * @author ucchy
+ *
  */
 public class KanaConverter {
 
-    private static final HashMap<String, String[]> TABLE;
-    static {
-        TABLE = new HashMap<String, String[]>();
-        TABLE.put(  "", new String[]{"あ","い","う","え","お"});
-        TABLE.put( "k", new String[]{"か","き","く","け","こ"});
-        TABLE.put( "s", new String[]{"さ","し","す","せ","そ"});
-        TABLE.put( "t", new String[]{"た","ち","つ","て","と"});
-        TABLE.put( "n", new String[]{"な","に","ぬ","ね","の"});
-        TABLE.put( "h", new String[]{"は","ひ","ふ","へ","ほ"});
-        TABLE.put( "m", new String[]{"ま","み","む","め","も"});
-        TABLE.put( "y", new String[]{"や","い","ゆ","いぇ","よ"});
-        TABLE.put( "r", new String[]{"ら","り","る","れ","ろ"});
-        TABLE.put( "w", new String[]{"わ","うぃ","う","うぇ","を"});
-        TABLE.put( "g", new String[]{"が","ぎ","ぐ","げ","ご"});
-        TABLE.put( "z", new String[]{"ざ","じ","ず","ぜ","ぞ"});
-        TABLE.put( "j", new String[]{"じゃ","じ","じゅ","じぇ","じょ"});
-        TABLE.put( "d", new String[]{"だ","ぢ","づ","で","ど"});
-        TABLE.put( "b", new String[]{"ば","び","ぶ","べ","ぼ"});
-        TABLE.put( "p", new String[]{"ぱ","ぴ","ぷ","ぺ","ぽ"});
-        TABLE.put("gy", new String[]{"ぎゃ","ぎぃ","ぎゅ","ぎぇ","ぎょ"});
-        TABLE.put("gw", new String[]{"ぐぁ","ぐぃ","ぐぅ","ぐぇ","ぐぉ"});
-        TABLE.put("zy", new String[]{"じゃ","じぃ","じゅ","じぇ","じょ"});
-        TABLE.put("jy", new String[]{"じゃ","じぃ","じゅ","じぇ","じょ"});
-        TABLE.put("dy", new String[]{"ぢゃ","ぢぃ","ぢゅ","ぢぇ","ぢょ"});
-        TABLE.put("dh", new String[]{"でゃ","でぃ","でゅ","でぇ","でょ"});
-        TABLE.put("dw", new String[]{"どぁ","どぃ","どぅ","どぇ","どぉ"});
-        TABLE.put("by", new String[]{"びゃ","びぃ","びゅ","びぇ","びょ"});
-        TABLE.put("py", new String[]{"ぴゃ","ぴぃ","ぴゅ","ぴぇ","ぴょ"});
-        TABLE.put( "v", new String[]{"ヴぁ","ヴぃ","ヴ","ヴぇ","ヴぉ"});
-        TABLE.put("vy", new String[]{"ヴゃ","ヴぃ","ヴゅ","ヴぇ","ヴょ"});
-        TABLE.put("sh", new String[]{"しゃ","し","しゅ","しぇ","しょ"});
-        TABLE.put("sy", new String[]{"しゃ","し","しゅ","しぇ","しょ"});
-        TABLE.put( "c", new String[]{"か","し","く","せ","こ"});
-        TABLE.put("ch", new String[]{"ちゃ","ち","ちゅ","ちぇ","ちょ"});
-        TABLE.put("cy", new String[]{"ちゃ","ち","ちゅ","ちぇ","ちょ"});
-        TABLE.put( "f", new String[]{"ふぁ","ふぃ","ふ","ふぇ","ふぉ"});
-        TABLE.put("fy", new String[]{"ふゃ","ふぃ","ふゅ","ふぇ","ふょ"});
-        TABLE.put("fw", new String[]{"ふぁ","ふぃ","ふ","ふぇ","ふぉ"});
-        TABLE.put( "q", new String[]{"くぁ","くぃ","く","くぇ","くぉ"});
-        TABLE.put("ky", new String[]{"きゃ","きぃ","きゅ","きぇ","きょ"});
-        TABLE.put("kw", new String[]{"くぁ","くぃ","く","くぇ","くぉ"});
-        TABLE.put("ty", new String[]{"ちゃ","ちぃ","ちゅ","ちぇ","ちょ"});
-        TABLE.put("ts", new String[]{"つぁ","つぃ","つ","つぇ","つぉ"});
-        TABLE.put("th", new String[]{"てゃ","てぃ","てゅ","てぇ","てょ"});
-        TABLE.put("tw", new String[]{"とぁ","とぃ","とぅ","とぇ","とぉ"});
-        TABLE.put("ny", new String[]{"にゃ","にぃ","にゅ","にぇ","にょ"});
-        TABLE.put("hy", new String[]{"ひゃ","ひぃ","ひゅ","ひぇ","ひょ"});
-        TABLE.put("my", new String[]{"みゃ","みぃ","みゅ","みぇ","みょ"});
-        TABLE.put("ry", new String[]{"りゃ","りぃ","りゅ","りぇ","りょ"});
-        TABLE.put( "l", new String[]{"ぁ","ぃ","ぅ","ぇ","ぉ"});
-        TABLE.put( "x", new String[]{"ぁ","ぃ","ぅ","ぇ","ぉ"});
-        TABLE.put("ly", new String[]{"ゃ","ぃ","ゅ","ぇ","ょ"});
-        TABLE.put("lt", new String[]{"た","ち","っ","て","と"});
-        TABLE.put("lk", new String[]{"ヵ","き","く","ヶ","こ"});
-        TABLE.put("xy", new String[]{"ゃ","ぃ","ゅ","ぇ","ょ"});
-        TABLE.put("xt", new String[]{"た","ち","っ","て","と"});
-        TABLE.put("xk", new String[]{"ヵ","き","く","ヶ","こ"});
-        TABLE.put("wy", new String[]{"わ","ゐ","う","ゑ","を"});
-        TABLE.put("wh", new String[]{"うぁ","うぃ","う","うぇ","うぉ"});
-    };
-
-    private static String getKanaFromTable(String s, int n) {
-
-        if ( TABLE.containsKey(s) ) {
-            return TABLE.get(s)[n];
-        }
-        return s + TABLE.get("")[n];
+    public KanaConverter() {
     }
 
-    /**
-     * ローマ字をかな文字へ変換する
-     * @param org 変換元文字列
-     * @return 変換後の文字列
-     */
-    public static String conv(String org) {
+    private String[][] r2kTable = {
+            {"", "あ", "い", "う", "え", "お"},             // 0.
+            {"k", "か", "き", "く", "け", "こ"},             // 1.
+            {"s", "さ", "し", "す", "せ", "そ"},             // 2.
+            {"t", "た", "ち", "つ", "て", "と"},             // 3.
+            {"n", "な", "に", "ぬ", "ね", "の"},             // 4.
+            {"h", "は", "ひ", "ふ", "へ", "ほ"},             // 5.
+            {"m", "ま", "み", "む", "め", "も"},             // 6.
+            {"y", "や", "い", "ゆ", "いぇ", "よ"},           // 7.
+            {"r", "ら", "り", "る", "れ", "ろ"},             // 8.
+            {"w", "わ", "うぃ", "う", "うぇ", "を"},         // 9.
 
-        String last = "";
-        StringBuilder line = new StringBuilder();
+            {"g", "が", "ぎ", "ぐ", "げ", "ご"},             //10.
+            {"z", "ざ", "じ", "ず", "ぜ", "ぞ"},             //11.
+            {"j", "じゃ", "じ", "じゅ", "じぇ", "じょ"},     //12.
+            {"d", "だ", "ぢ", "づ", "で", "ど"},             //13.
+            {"b", "ば", "び", "ぶ", "べ", "ぼ"},             //14.
+            {"p", "ぱ", "ぴ", "ぷ", "ぺ", "ぽ"},             //15.
+            {"gy", "ぎゃ", "ぎぃ", "ぎゅ", "ぎぇ", "ぎょ"},   //16.
+            {"zy", "じゃ", "じぃ", "じゅ", "じぇ", "じょ"},   //17.
+            {"jy", "じゃ", "じぃ", "じゅ", "じぇ", "じょ"},   //18.
+            {"dy", "ぢゃ", "ぢぃ", "ぢゅ", "ぢぇ", "ぢょ"},   //19.
+            {"by", "びゃ", "びぃ", "びゅ", "びぇ", "びょ"},   //20.
+            {"py", "ぴゃ", "ぴぃ", "ぴゅ", "ぴぇ", "ぴょ"},   //21.
 
-        for ( int i=0; i<org.length(); i++ ) {
-            String tmp = org.substring(i,i+1);
+            {"l", "ぁ", "ぃ", "ぅ", "ぇ", "ぉ"},             //22.
+            {"v", "ヴぁ", "ヴぃ", "ヴ", "ヴぇ", "ヴぉ"},     //23.
+            {"sh", "しゃ", "し", "しゅ", "しぇ", "しょ"},     //24.
+            {"sy", "しゃ", "し", "しゅ", "しぇ", "しょ"},     //25.
+            {"ch", "ちゃ", "ち", "ちゅ", "ちぇ", "ちょ"},     //26.
+            {"cy", "ちゃ", "ち", "ちゅ", "ちぇ", "ちょ"},     //27.
 
-            if ( tmp.equals("a") ) {
-                line.append( getKanaFromTable(last, 0) );
-                last = "";
-            } else if ( tmp.equals("i") ) {
-                line.append( getKanaFromTable(last, 1) );
-                last = "";
-            } else if ( tmp.equals("u") ) {
-                line.append( getKanaFromTable(last, 2) );
-                last = "";
-            } else if ( tmp.equals("e") ) {
-                line.append( getKanaFromTable(last, 3) );
-                last = "";
-            } else if ( tmp.equals("o") ) {
-                line.append( getKanaFromTable(last, 4) );
-                last = "";
+            {"f", "ふぁ", "ふぃ", "ふ", "ふぇ", "ふぉ"},     //28.
+            {"q", "くぁ", "くぃ", "く", "くぇ", "くぉ"},     //29.
+            {"ky", "きゃ", "きぃ", "きゅ", "きぇ", "きょ"},   //30.
+            {"ty", "ちゃ", "ちぃ", "ちゅ", "ちぇ", "ちょ"},   //31.
+            {"ny", "にゃ", "にぃ", "にゅ", "にぇ", "にょ"},   //32.
+            {"hy", "ひゃ", "ひぃ", "ひゅ", "ひぇ", "ひょ"},   //33.
+            {"my", "みゃ", "みぃ", "みゅ", "みぇ", "みょ"},   //34.
+            {"ry", "りゃ", "りぃ", "りゅ", "りぇ", "りょ"},   //35.
+            {"ly", "ゃ", "ぃ", "ゅ", "ぇ", "ょ"},             //36.
+            {"lt", "た", "ち", "っ", "て", "と"},             //37.
+    };
+
+    private String R2K(String s, int n) {
+
+        if (n < 5) {
+            for (int i = 0; i < 38; i++) {
+                if (s.equals(r2kTable[i][0])) {
+                    return r2kTable[i][n + 1];
+                }
+            }
+            return s + r2kTable[0][n + 1];
+        } else if (n == 5) {
+            return "ん";
+        } else {
+            return "っ";
+        }
+    }
+
+    public String convert(String srcLine) {
+        String buf;
+        String tmp;
+
+        String cnvLine = "";
+        buf = "";
+        for (int i = 0; i < srcLine.length(); i++) {
+            tmp = srcLine.substring(i, i + 1);
+
+            if (tmp.equals("a")) {
+                cnvLine = cnvLine + R2K(buf, 0);
+                buf = "";
+            } else if (tmp.equals("i")) {
+                cnvLine = cnvLine + R2K(buf, 1);
+                buf = "";
+            } else if (tmp.equals("u")) {
+                cnvLine = cnvLine + R2K(buf, 2);
+                buf = "";
+            } else if (tmp.equals("e")) {
+                cnvLine = cnvLine + R2K(buf, 3);
+                buf = "";
+            } else if (tmp.equals("o")) {
+                cnvLine = cnvLine + R2K(buf, 4);
+                buf = "";
             } else {
-                if ( last.equals("n") && !(tmp.equals("y")) ) {
-                    line.append("ん");
-                    last = "";
-                    if ( tmp.equals("n") ) {
-                        continue;
+                if (buf.equals("n")) {
+                    if (!(tmp.equals("y"))) {         /* "ny" */
+                        cnvLine = cnvLine + R2K(buf, 5);
+                        buf = "";
+                        if (tmp.equals("n")) continue; /* "nn" */
                     }
                 }
-                if ( Character.isLetter(tmp.charAt(0)) ) {
-                    if ( Character.isUpperCase(tmp.charAt(0)) ) {
-                        line.append(last + tmp);
-                        last = "";
-                    } else if ( last.equals(tmp) ) {
-                        line.append("っ");
-                        last = tmp;
+
+                if (java.lang.Character.isLetter(tmp.charAt(0))) {
+                    if (buf.equals(tmp)) {
+                        cnvLine = cnvLine + R2K(buf, 6);     /* "っ" */
+                        buf = tmp;
                     } else {
-                        last = last + tmp;
+                        buf = buf + tmp;
                     }
                 } else {
-                    if ( tmp.equals("-") ) {
-                        line.append(last + "ー");
-                        last = "";
-                    } else if ( tmp.equals(".") ) {
-                        line.append(last + "。");
-                        last = "";
-                    } else if ( tmp.equals(",") ) {
-                        line.append(last + "、");
-                        last = "";
-                    } else if ( tmp.equals("?") ) {
-                        line.append(last + "？");
-                        last = "";
-                    } else if ( tmp.equals("!") ) {
-                        line.append(last + "！");
-                        last = "";
-                    } else if ( tmp.equals("[") ) {
-                        line.append(last + "「");
-                        last = "";
-                    } else if ( tmp.equals("]") ) {
-                        line.append(last + "」");
-                        last = "";
-                    } else if ( tmp.equals("<") ) {
-                        line.append(last + "＜");
-                        last = "";
-                    } else if ( tmp.equals(">") ) {
-                        line.append(last + "＞");
-                        last = "";
-                    } else if ( tmp.equals("&") ) {
-                        line.append(last + "＆");
-                        last = "";
-                    } else if ( tmp.equals("\"") ) {
-                        line.append(last + "”");
-                        last = "";
-                    } else if ( tmp.equals("(") || tmp.equals(")") ) {
-                        line.append(last);
-                        last = "";
-                    } else {
-                        line.append(last + tmp);
-                        last = "";
-                    }
+                    cnvLine = cnvLine + buf + tmp;
+                    buf = "";
                 }
             }
         }
-        line.append(last);
-
-        return line.toString();
+        return cnvLine;
     }
 }

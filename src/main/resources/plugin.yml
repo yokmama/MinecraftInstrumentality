@@ -55,6 +55,10 @@ commands:
     aliases: s
     permission: minecraftday.shout
     permission-message: You dont't have <permission>
+  voteauto:
+    usage: "Usage: /<command>"
+    permission: minecraftday.voteauto
+    permission-message: You dont't have <permission>
 permissions:
   minecraftday.md:
     description: server settings permission
@@ -88,4 +92,7 @@ permissions:
     default: true
   minecraftday.shout:
     description: shout command permission
+    default: true
+  minecraftday.voteauto:
+    description: voteauto command permission
     default: true
