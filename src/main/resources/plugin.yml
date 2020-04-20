@@ -15,7 +15,7 @@ commands:
   minigame:
     description: mini game
     aliases: mg
-    usage: "Usage: /<command> [set|start|invite|kick|list|cancel|join|leave|gather|no|finish]"
+    usage: "Usage: /<command> [set|start|add|kick|list|cancel|join|gather|finish]"
     permission: minecraftday.mg
     permission-message: You dont't have <permission>
   minigame gather:

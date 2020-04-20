@@ -28,9 +28,13 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         if (command.getName().equalsIgnoreCase("vote") && args.length > 0 && sender instanceof Player) {
             String cmd0 = args[0].toLowerCase();
             if (cmd0.equals("jail") && args.length>1) {
-                voteJail((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+                if(sender.hasPermission("minecraftday.vote.jail")){
+                    voteJail((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+                }
             } else if (cmd0.equals("mute") && args.length>1) {
-                voteMute((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+                if(sender.hasPermission("minecraftday.vote.mute")) {
+                    voteMute((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+                }
             } else if (cmd0.equals("unmute") && args.length>1) {
                 voteUnMute((Player) sender, Arrays.copyOfRange(args, 1, args.length));
             } else if (cmd0.equals("unjail") && args.length>1) {
@@ -192,7 +196,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         if(target!=null) {
-            Boolean isJailed = plugin.isJailed(target);
+            Boolean isJailed = false;//plugin.isJailed(target);
             if(isJailed!=null) {
                 if (!isJailed) {
                     vote(player, new VoteTask(player, target, args[0] + " をろうやに入れる", 3, true) {
@@ -300,6 +304,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         }
 
         conf.set("autovote", yesOrNo);
+        conf.save();
     }
 
 
@@ -351,7 +356,7 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         msg.append("&c").append(player.getName()).append(" &6が「").append(task.question()).append("」の投票を始めました！\n");
         player.sendMessage(ChatColor.translateAlternateColorCodes('&', msg.toString()));
 
-        if (task.numVotersCount == 0) {
+        if (task.numVotersCount == 0 || task.isFinish()) {
             task.run();
         } else {
             currentTask = task;

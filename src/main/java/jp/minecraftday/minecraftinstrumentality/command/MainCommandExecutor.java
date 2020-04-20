@@ -32,6 +32,10 @@ public class MainCommandExecutor implements CommandExecutor, TabExecutor {
             plugin.getConfig().set("vote.jailname", "test");
             plugin.saveConfig();
         }
+        if (!plugin.getConfig().isSet("basicincome.money")) {
+            plugin.getConfig().set("basicincome.money", 5000);
+            plugin.saveConfig();
+        }
     }
 
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {

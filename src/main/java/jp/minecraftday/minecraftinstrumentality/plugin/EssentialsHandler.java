@@ -1,9 +1,13 @@
 package jp.minecraftday.minecraftinstrumentality.plugin;
 
 import com.earth2me.essentials.Essentials;
+import com.earth2me.essentials.User;
 import com.earth2me.essentials.perm.PermissionsHandler;
+import net.ess3.api.MaxMoneyException;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.math.BigDecimal;
 
 public class EssentialsHandler {
     Essentials essentials;
@@ -30,6 +34,16 @@ public class EssentialsHandler {
         if(grp.equals("gm")) return "&6";
         else if(grp.equals("sensei")) return "&6";
         return "&f";
+    }
+
+    public void pay(Player player, int money){
+        User user = essentials.getUser(player);
+        try {
+            essentials.getUser(player).setMoney(user.getMoney().add(new BigDecimal(money)));
+        } catch (MaxMoneyException e) {
+            e.printStackTrace();
+        }
+        ;
     }
 
 }

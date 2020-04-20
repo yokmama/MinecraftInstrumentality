@@ -1,7 +1,7 @@
 package jp.minecraftday.minecraftinstrumentality;
 
-import com.earth2me.essentials.perm.PermissionsHandler;
 import jp.minecraftday.minecraftinstrumentality.command.*;
+import jp.minecraftday.minecraftinstrumentality.login.BasicIncome;
 import jp.minecraftday.minecraftinstrumentality.plugin.DiscordSRVHandler;
 import jp.minecraftday.minecraftinstrumentality.plugin.EssentialsHandler;
 import jp.minecraftday.minecraftinstrumentality.utils.*;
@@ -33,6 +33,8 @@ public final class Main extends JavaPlugin implements Listener {
     private JavaPlugin discordSRV = null;
     private JavaPlugin essentials = null;
 
+    public JavaPlugin getEssentials(){ return essentials;}
+
     @Override
     public void onEnable() {
         super.onEnable();
@@ -54,6 +56,7 @@ public final class Main extends JavaPlugin implements Listener {
 
         //イベントリスナー登録
         getServer().getPluginManager().registerEvents(this, this);
+        getServer().getPluginManager().registerEvents(new BasicIncome(this), this);
         //コマンド登録
         getCommand("md").setExecutor(new MainCommandExecutor(this));
         getCommand("minigame").setExecutor(gameCommandExecutor);

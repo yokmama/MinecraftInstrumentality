@@ -60,12 +60,10 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
                 setGame((Player) sender, Arrays.copyOfRange(args, 1, args.length));
             } else if (cmd0.equals("join")) {
                 joinGame((Player) sender, Arrays.copyOfRange(args, 1, args.length));
-            } else if (cmd0.equals("leave")) {
-                leaveGame((Player) sender);
             } else if (cmd0.equals("finish")) {
                 finishGame((Player) sender);
-            } else if (cmd0.equals("invite")) {
-                invitePlayer((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+            } else if (cmd0.equals("add")) {
+                addPlayer((Player) sender, Arrays.copyOfRange(args, 1, args.length));
             } else if (cmd0.equals("kick")) {
                 kickPlayer((Player) sender, Arrays.copyOfRange(args, 1, args.length));
             } else if (cmd0.equals("list")) {
@@ -74,8 +72,6 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
                 startGame((Player) sender);
             } else if (cmd0.equals("gather")) {
                 gatherPlayer((Player) sender);
-            } else if (cmd0.equals("no")) {
-                setNo((Player) sender, Arrays.copyOfRange(args, 1, args.length));
             } else if (cmd0.equals("cancel")) {
                 cancelGame((Player) sender);
             }
@@ -95,6 +91,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
                     list.add("start");
                     list.add("kick");
                     list.add("gather");
+                    list.add("add");
                     if (hostingGame.isInGame()) {
                         list.add("cancel");
                     }
@@ -103,10 +100,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
 
                 GameMaker gameMaker = getJoiningGame(sender.getName());
                 if (gameMaker != null || hostingGame != null) {
-                    list.add("invite");
                     list.add("list");
-                    list.add("leave");
-                    list.add("no");
                 }
                 if (args.length == 0 || args[0].length() == 0) {
                     return list;
@@ -121,7 +115,7 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
                 if(cmd0.equals("join")){
                     //現在登録参加できるゲーム
                     games.values().stream().forEach(g->list.add(g.getHostplayer()));
-                }else if(cmd0.equals("invite")){
+                }else if(cmd0.equals("add")){
                     //自分に所属していないプレイヤー
                     Bukkit.getOnlinePlayers().stream().forEach(pl->{
                         if(getJoiningGame(pl.getName()) == null){
@@ -236,57 +230,27 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
 
     }
 
-    private void setNo(Player player, String[] cmds) {
-        if (cmds.length == 0) {
-            player.sendMessage("セットする番号を入力してください");
-        }
-
-        int setNo = -1;
-        try {
-            setNo = Integer.parseInt(cmds[0]);
-        } catch (Exception e) {
-            player.sendMessage("番号が数字ではありません");
-            return;
-        }
-
-        GameMaker joiningGame = getJoiningGame(player.getName());
-        if (joiningGame == null) {
-            player.sendMessage("参加しているゲームががありません");
-            return;
-        }
-
-        joiningGame.setScoreItem(player.getName(), setNo);
-
-    }
-
-    private void invitePlayer(Player player, String[] cmds) {
+    private void addPlayer(Player player, String[] cmds) {
         if (cmds.length == 0) {
             player.sendMessage("プレイヤー名をいれてください");
         }
 
-        GameMaker gameMaker = getJoiningGame(player.getName());
+        GameMaker gameMaker = getGameMaker(player);
         if (gameMaker == null) {
             gameMaker = getGameMaker(player);
         }
 
         if (gameMaker == null) {
-            player.sendMessage("ゲームに参加していないため招待できません");
+            player.sendMessage("ゲームに主催者でないため追加できません");
             return;
         }
 
-        int sent = 0;
         for (String playerName : cmds) {
-            Player invitePlayer = Bukkit.getPlayerExact(playerName);
-            if (invitePlayer != null) {
-                sendInviteMessage(gameMaker, invitePlayer);
-                sent++;
+            Player addPlayer = Bukkit.getPlayerExact(playerName);
+            if (addPlayer != null) {
+                joinGame(addPlayer, new String[]{gameMaker.getHostplayer()});
             }
         }
-
-        if(sent>0)
-            player.sendMessage("招待を"+sent+"件送りました");
-        else
-            player.sendMessage("招待を送る相手がいませんでした");
     }
 
     private void kickPlayer(Player player, String[] cmds) {
@@ -320,17 +284,6 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
                 .append(" &6を使用してください。\n");
 
         gameMaker.sendMessage(player.getName(), builder.toString());
-    }
-
-    private void leaveGame(Player player) {
-        GameMaker gameMaker = getJoiningGame(player.getName());
-        if (gameMaker!=null) {
-            gameMaker.removePlayer(player);
-            gameMaker.sendMessage(player.getName(), "&6ゲームから抜けました");
-            gameMaker.sendMessage(gameMaker.getHostplayer(), "&c" + player.getName() + "&6がゲームから抜けました");
-        } else {
-            player.sendMessage("参加しているゲームがありません");
-        }
     }
 
     private void listPlayer(Player player) {
@@ -394,7 +347,14 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
             gameMaker.finish();
             remove(player.getName());
         } else {
-            player.sendMessage("あなたはゲーム作成者ではありません");
+            GameMaker joiningGame = getJoiningGame(player.getName());
+            if (joiningGame!=null) {
+                joiningGame.removePlayer(player);
+                joiningGame.sendMessage(player.getName(), "&6ゲームから抜けました");
+                joiningGame.sendMessage(gameMaker.getHostplayer(), "&c" + player.getName() + "&6がゲームから抜けました");
+            } else {
+                player.sendMessage("参加しているゲームがありません");
+            }
         }
     }
 
