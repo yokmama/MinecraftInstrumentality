@@ -324,7 +324,10 @@ public class VoteCommandExecutor implements CommandExecutor, TabExecutor {
         task.getPlayers().forEach(p -> {
             if (!task.senderName.equals(p.getName()) && (task.targetName == null ||!task.targetName.equals(p.getName()))) {
                 Configuration configuration = plugin.getUserConfiguration(p);
-                String yesOrNo = configuration!=null?configuration.getString("autovote").toLowerCase(): "";
+                String yesOrNo = "";
+                if(configuration!=null && configuration.getString("autovote")!=null){
+                    yesOrNo = configuration.getString("autovote").toLowerCase();
+                }
                 if(task.minimumRequired < 3 && yesOrNo!=null && (yesOrNo.equals("yes") || yesOrNo.equals("no"))){
                     StringBuilder builder = new StringBuilder();
                     builder.append("&c").append(player.getName()).append(" &6の「").append(task.question()).append("」の投票に\n");
