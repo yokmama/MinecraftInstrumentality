@@ -4,9 +4,11 @@ import jp.minecraftday.minecraftinstrumentality.command.*;
 import jp.minecraftday.minecraftinstrumentality.login.BasicIncome;
 import jp.minecraftday.minecraftinstrumentality.plugin.DiscordSRVHandler;
 import jp.minecraftday.minecraftinstrumentality.plugin.EssentialsHandler;
+import jp.minecraftday.minecraftinstrumentality.plugin.MultiverseHandler;
 import jp.minecraftday.minecraftinstrumentality.utils.*;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Location;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -32,8 +34,13 @@ public final class Main extends JavaPlugin implements Listener {
 
     private JavaPlugin discordSRV = null;
     private JavaPlugin essentials = null;
+    private JavaPlugin multiverseCore = null;
+    private JavaPlugin worldEdit = null;
 
     public JavaPlugin getEssentials(){ return essentials;}
+
+    public JavaPlugin getMultiverseCore(){ return multiverseCore;}
+    public JavaPlugin getWorldEdit(){ return worldEdit;}
 
     @Override
     public void onEnable() {
@@ -46,13 +53,24 @@ public final class Main extends JavaPlugin implements Listener {
         final PluginManager pluginManager = getServer().getPluginManager();
         Plugin ess = pluginManager.getPlugin("Essentials");
         if (ess != null){// && ess.isEnabled()) {
-            essentials = (JavaPlugin) ess;
+            this.essentials = (JavaPlugin) ess;
         }
 
         Plugin srv = pluginManager.getPlugin("DiscordSRV");
         if (srv != null){// && srv.isEnabled()) {
-            discordSRV = (JavaPlugin) srv;
+            this.discordSRV = (JavaPlugin) srv;
         }
+
+        Plugin core = pluginManager.getPlugin("Multiverse-Core");
+        if (core != null){// && multiverseCore.isEnabled()) {
+            this.multiverseCore = (JavaPlugin) core;
+        }
+
+        Plugin worldEdit = pluginManager.getPlugin("WorldEdit");
+        if (worldEdit != null){
+            this.worldEdit = (JavaPlugin) worldEdit;
+        }
+
 
         //イベントリスナー登録
         getServer().getPluginManager().registerEvents(this, this);
@@ -70,6 +88,7 @@ public final class Main extends JavaPlugin implements Listener {
         ChatCommandExecutor chat = new ChatCommandExecutor(this);
         getCommand("hiragana").setExecutor(chat);
         getCommand("shout").setExecutor(chat);
+        getCommand("estate").setExecutor(new EstateCommandExecutor(this));
 
         saveDefaultConfig();
     }
@@ -197,4 +216,10 @@ public final class Main extends JavaPlugin implements Listener {
         if (essentials != null) return new EssentialsHandler(essentials).isJailed(player);
         return null;
     }
+
+    public Location getSpawnLocation(Player player) {
+        if (multiverseCore != null) return new MultiverseHandler(multiverseCore).getSpawnPosition(player.getWorld().getName());
+        else return player.getWorld().getSpawnLocation();
+    }
+
 }

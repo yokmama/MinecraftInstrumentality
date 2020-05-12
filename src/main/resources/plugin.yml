@@ -2,9 +2,10 @@ name: MinecraftDay
 version: @version@
 main: jp.minecraftday.minecraftinstrumentality.Main
 api-version: 1.13
-depend: [Essentials]
+depend:
+  - Essentials
+  - WorldEdit
 softdepend: [discordsrvs]
-
 
 commands:
   md:
@@ -59,6 +60,10 @@ commands:
     usage: "Usage: /<command>"
     permission: minecraftday.voteauto
     permission-message: You dont't have <permission>
+  estate:
+    usage: "Usage: /<command>"
+    permission: minecraftday.estate
+    permission-message: You dont't have <permission>
 permissions:
   minecraftday.md:
     description: server settings permission
@@ -96,3 +101,6 @@ permissions:
   minecraftday.voteauto:
     description: voteauto command permission
     default: true
+  minecraftday.estate:
+    description: estate command permission
+    default: op

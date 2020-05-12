@@ -8,6 +8,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EssentialsHandler {
     Essentials essentials;
@@ -44,6 +46,11 @@ public class EssentialsHandler {
             e.printStackTrace();
         }
         ;
+    }
+
+    public List<String> getWarps(){
+        return new ArrayList(essentials.getWarps().getList());
+
     }
 
 }
