@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 public abstract class MainCommandExecutor implements SubCommand {
     protected static final Logger LOGGER = Logger.getLogger(MainCommandExecutor.class.getSimpleName());
     protected final MainPlugin plugin;
-    private Map<String, SubCommand> subCommands = new HashMap<>();
+    protected Map<String, SubCommand> subCommands = new HashMap<>();
 
     public MainCommandExecutor(MainPlugin plugin) {
         this.plugin = plugin;

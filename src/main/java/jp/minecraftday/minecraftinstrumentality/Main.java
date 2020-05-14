@@ -145,7 +145,7 @@ public final class Main extends MainPlugin implements Listener {
             color = "&c";
             players = null;//Bukkit.getOnlinePlayers();
         } else {
-            final GameMaker hostGame = gameCommandExecutor.getGameMaker(sender);
+            final GameMaker hostGame = gameCommandExecutor.getGameMaker(sender.getName());
             final GameMaker joinGame = gameCommandExecutor.getJoiningGame(sender.getName());
             if(hostGame != null){
                 color = "&a";
