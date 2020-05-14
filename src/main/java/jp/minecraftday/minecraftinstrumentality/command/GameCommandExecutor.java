@@ -144,16 +144,9 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
     }
 
     private void setGame(Player hostplayer, String[] cmds) {
-        GameMaker gameMaker = games.get(hostplayer.getName());
-        if (gameMaker != null && gameMaker.isInGame()) {
-            hostplayer.sendMessage("すでにゲームがスタートしています。一度キャンセルしましょう");
-            return;
-        } else if (gameMaker == null) {
-            gameMaker = new GameMaker(this, hostplayer);
-        }
-
-        int time;
+        int time = -1;
         int max = 6; //定員の初期値は6
+        String rule = "dummy";
 
 
         if (cmds.length > 0) {
@@ -163,17 +156,25 @@ public class GameCommandExecutor implements CommandExecutor, TabExecutor {
                 hostplayer.sendMessage("ゲーム時間は数字でいれてください");
                 return;
             }
-            if(cmds.length> 1){
-                try {
-                    max = Integer.parseInt(cmds[1]);
-                } catch (Exception e) {
-                    hostplayer.sendMessage("定員は数字でいれてください");
-                    return;
-                }
+        }
+        if(cmds.length> 1){
+            try {
+                max = Integer.parseInt(cmds[1]);
+            } catch (Exception e) {
+                hostplayer.sendMessage("定員は数字でいれてください");
+                return;
             }
-        } else {
-            hostplayer.sendMessage("/mg set 分 [定員]");
+        }
+        if(cmds.length> 2){
+            rule = cmds[2];
+        }
+
+        GameMaker gameMaker = games.get(hostplayer.getName());
+        if (gameMaker != null && gameMaker.isInGame()) {
+            hostplayer.sendMessage("すでにゲームがスタートしています。一度キャンセルしましょう");
             return;
+        } else if (gameMaker == null) {
+            gameMaker = new GameMaker(this, hostplayer, rule);
         }
 
         gameMaker.setTime(time);

@@ -1,6 +1,8 @@
 package jp.minecraftday.minecraftinstrumentality;
 
 import jp.minecraftday.minecraftinstrumentality.command.*;
+import jp.minecraftday.minecraftinstrumentality.core.MainPlugin;
+import jp.minecraftday.minecraftinstrumentality.core.utils.I18n;
 import jp.minecraftday.minecraftinstrumentality.login.BasicIncome;
 import jp.minecraftday.minecraftinstrumentality.plugin.DiscordSRVHandler;
 import jp.minecraftday.minecraftinstrumentality.plugin.EssentialsHandler;
@@ -23,12 +25,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public final class Main extends JavaPlugin implements Listener {
+public final class Main extends MainPlugin implements Listener {
     GameCommandExecutor gameCommandExecutor;
     UserConfiguration userConfiguration;
 
@@ -76,7 +75,7 @@ public final class Main extends JavaPlugin implements Listener {
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new BasicIncome(this), this);
         //コマンド登録
-        getCommand("md").setExecutor(new MainCommandExecutor(this));
+        getCommand("md").setExecutor(new MineCraftDayCommandExecutor(this));
         getCommand("minigame").setExecutor(gameCommandExecutor);
         getCommand("setitem").setExecutor(new SetItemNameCommandExecutor(this));
         CommandExecutor vote = new VoteCommandExecutor(this);
@@ -107,9 +106,11 @@ public final class Main extends JavaPlugin implements Listener {
         String msg = getConfig().getString("welcome.message");
         if (msg == null) msg = "";
 
+        event.getPlayer().sendMessage(I18n.tl("message.md.welcome1"));
         StringBuilder buf = new StringBuilder();
         buf.append("tellraw ").append(event.getPlayer().getName()).append(" ").append(msg);
         event.getPlayer().performCommand(buf.toString());
+        event.getPlayer().sendMessage(I18n.tl("message.md.welcome2"));
 
         gameCommandExecutor.onLogin(event.getPlayer());
     }

@@ -8,8 +8,9 @@ depend:
 softdepend: [discordsrvs]
 
 commands:
-  md:
+  minecraftday:
     description: Server Setting
+    aliases: md
     usage: "Usage: /<command> [welcome|reload]"
     permission: minecraftday.md
     permission-message: You dont't have <permission>

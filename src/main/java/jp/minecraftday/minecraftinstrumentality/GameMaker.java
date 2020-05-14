@@ -31,11 +31,14 @@ public class GameMaker implements Runnable {
     int max;
     TitleSender titleSender = new TitleSender();
 
-    public GameMaker(GameCommandExecutor gameCommandExecutor, Player hostplayer) {
+    public GameMaker(GameCommandExecutor gameCommandExecutor, Player hostplayer, String rule) {
         this.gameCommandExecutor = gameCommandExecutor;
         this.hostplayer = hostplayer.getName();
         this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        sidebar = scoreboard.registerNewObjective(OBJECTIVE_NAME, "dummy", "");
+        if(rule.equalsIgnoreCase("pvp")) rule = "playerKillCount";
+        else if(rule.equalsIgnoreCase("mob")) rule = "totalKillCount";
+        else if(rule.equalsIgnoreCase("life")) rule = "health";
+        sidebar = scoreboard.registerNewObjective(OBJECTIVE_NAME, rule, "");
         sidebar.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         hostplayer.setScoreboard(scoreboard);
@@ -45,13 +48,24 @@ public class GameMaker implements Runnable {
         StringBuilder name = new StringBuilder();
 
         if(startedTime!=0) {
-            long limitTime = (time * 60 * 1000) - (Calendar.getInstance().getTime().getTime() - startedTime);
-            int m = new Double(Math.floor(limitTime / (60 * 1000))).intValue();
-            int s = new Double(Math.floor((limitTime - m * (60 * 1000)) / 1000)).intValue();
+            if(time>0) {
+                long limitTime = (time * 60 * 1000) - (Calendar.getInstance().getTime().getTime() - startedTime);
+                int m = new Double(Math.floor(limitTime / (60 * 1000))).intValue();
+                int s = new Double(Math.floor((limitTime - m * (60 * 1000)) / 1000)).intValue();
 
-            name.append(String.format("残り時間:%02d:%02d", m, s));
+                name.append(String.format("残り時間:%02d:%02d", m, s));
+            }else{
+                long elapsedTime = Calendar.getInstance().getTime().getTime() - startedTime;
+                int m = new Double(Math.floor(elapsedTime / (60 * 1000))).intValue();
+                int s = new Double(Math.floor((elapsedTime - m * (60 * 1000)) / 1000)).intValue();
+                name.append(String.format("経過時間:%02d:%02d", m, s));
+            }
         }else {
-            name.append(String.format("制限時間:%02d:00", time));
+            if(time>0) {
+                name.append(String.format("制限時間:%02d:00", time));
+            }else{
+                name.append("時間制限なし");
+            }
         }
 
         sidebar.setDisplayName(name.toString());
@@ -214,7 +228,7 @@ public class GameMaker implements Runnable {
         try {
             while (!gameCommandExecutor.isShutdown()) {
                 long distance = Calendar.getInstance().getTime().getTime() - startedTime;
-                if (distance >= TIME_SPAN) {
+                if (time>0 && distance >= TIME_SPAN) {
                     //終了処理
                     end();
                     gameCommandExecutor.remove(hostplayer);
