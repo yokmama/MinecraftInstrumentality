@@ -1,47 +1,78 @@
 package jp.minecraftday.minecraftinstrumentality;
 
+import com.sun.jna.CallbackParameterContext;
 import jp.minecraftday.minecraftinstrumentality.command.GameCommandExecutor;
 import jp.minecraftday.minecraftinstrumentality.utils.TitleSender;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
-import org.bukkit.scoreboard.Score;
-import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.*;
 
+import javax.security.auth.callback.CallbackHandler;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class GameMaker implements Runnable {
-    private static final Logger logger = Logger.getLogger("gamemaker");
+    private static final Logger LOGGER = Logger.getLogger("gamemaker");
     private static final String OBJECTIVE_NAME = "minecraftday.mg";
     private GameCommandExecutor gameCommandExecutor;
     private Scoreboard scoreboard;
     private Objective sidebar;
-    final String hostplayer;
+    private String rule;
+    final String hostPlayerName;
     final Set<String> players = new HashSet<>();
     Future future;
     boolean cancel = false;
-    long startedTime;
-    int time;
-    int max;
+    long startedTime = 0;
+    int time = 5;
+    int max = 6;
     TitleSender titleSender = new TitleSender();
 
-    public GameMaker(GameCommandExecutor gameCommandExecutor, Player hostplayer, String rule) {
-        this.gameCommandExecutor = gameCommandExecutor;
-        this.hostplayer = hostplayer.getName();
-        this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
-        if(rule.equalsIgnoreCase("pvp")) rule = "playerKillCount";
-        else if(rule.equalsIgnoreCase("mob")) rule = "totalKillCount";
-        else if(rule.equalsIgnoreCase("life")) rule = "health";
-        sidebar = scoreboard.registerNewObjective(OBJECTIVE_NAME, rule, "");
-        sidebar.setDisplaySlot(DisplaySlot.SIDEBAR);
+    public static String[][] RULES = {
+            {"mob", "totalKillCount"},
+            {"pvp", "playerKillCount"},
+            {"fly", "minecraft.custom:minecraft.aviate_one_cm"},
+            {"cake", "minecraft.crafted:minecraft.cake"},
+            {"diamond", "minecraft.mined:diamond_ore:"},
+            {"zombie", "minecraft.killed:minecraft.zombie"}
+    };
 
-        hostplayer.setScoreboard(scoreboard);
+    public static ChatColor[] teamColors = {
+            ChatColor.WHITE,
+            ChatColor.RED,
+            ChatColor.BLUE,
+            ChatColor.GREEN,
+            ChatColor.YELLOW,
+            ChatColor.LIGHT_PURPLE,
+            ChatColor.GRAY,
+            ChatColor.GOLD
+    };
+
+    public GameMaker(GameCommandExecutor executor, Player player, String rule) {
+        this.gameCommandExecutor = executor;
+        this.hostPlayerName = player.getName();
+        this.scoreboard = Bukkit.getScoreboardManager().getNewScoreboard();
+        if(rule!=null){
+            this.rule = rule;
+            for(int i=0; i<RULES.length; i++){
+                if(RULES[i][0].equalsIgnoreCase(rule)){
+                    this.rule = RULES[i][1];
+                    break;
+                }
+            }
+        }else{
+            this.rule = "dummy";
+        }
+        LOGGER.info(this.rule+"でゲームを生成しました");
+        this.sidebar = scoreboard.registerNewObjective(OBJECTIVE_NAME, this.rule, "");
+        this.sidebar.setDisplaySlot(DisplaySlot.SIDEBAR);
+
+        player.setScoreboard(scoreboard);
+        updateSidebarName();
     }
 
     public void updateSidebarName() {
@@ -78,6 +109,10 @@ public class GameMaker implements Runnable {
         updateSidebarName();
     }
 
+    public int getTime(){
+        return this.time;
+    }
+
     public void setMaxPlayer(int max) {
         this.max = max;
     }
@@ -88,45 +123,81 @@ public class GameMaker implements Runnable {
 
     public Set<String> getPlayers(){ return players;}
 
-    public void addPlayer(Player player){
-        sidebar.getScore(player.getName()).setScore(1);
+    private ChatColor getColor(String team){
+        if(team!=null) {
+            for (int i = 0; i < teamColors.length; i++) {
+                if (teamColors[i].name().equalsIgnoreCase(team)) return teamColors[i];
+            }
+        }
+        return null;
+    }
 
+    private Team createTteam(ChatColor color){
+        Team team = scoreboard.getTeam(color.name());
+        if(team==null){
+            team = scoreboard.registerNewTeam(color.name());
+            team.setDisplayName(color.name());
+            team.setColor(color);
+            team.setOption(Team.Option.DEATH_MESSAGE_VISIBILITY, Team.OptionStatus.ALWAYS);
+            team.setOption(Team.Option.NAME_TAG_VISIBILITY, Team.OptionStatus.FOR_OWN_TEAM);
+            team.setPrefix(color.toString());
+            team.setSuffix(ChatColor.RESET.toString());
+            team.setAllowFriendlyFire(false);
+            team.setCanSeeFriendlyInvisibles(true);
+        }
+        return team;
+    }
+
+    public boolean setTeam(Player player, String teamColor) {
+        ChatColor color = getColor(teamColor);
+        if(color!=null) {
+            Team team = createTteam(color);
+            team.addEntry(fixName17(player.getName()));
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public void addPlayer(Player player, String teamColor){
+        sidebar.getScore(fixName17(player.getName())).setScore(0);
         this.players.add(player.getName());
 
+        //チームの指定がない場合は白にいれる
+        ChatColor color = getColor(teamColor);
+        if(color == null) color = ChatColor.WHITE;
+
+        Team team = createTteam(color);
+        team.addEntry(fixName17(player.getName()));
         player.setScoreboard(scoreboard);
     }
 
     public void removePlayer(Player player){
         this.players.remove(player.getName());
 
-        removeScores(player.getName());
-        if(!player.getName().equals(hostplayer)){
+        for(Iterator<Team> iterator=this.scoreboard.getTeams().iterator(); iterator.hasNext(); ){
+            Team t = iterator.next();
+            if(t.hasEntry(fixName17(player.getName()))){
+                t.removeEntry(fixName17(player.getName()));
+                break;
+            }
+        }
+
+        scoreboard.resetScores(fixName17(player.getName()));
+        if(!player.getName().equals(hostPlayerName)){
             player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         }
     }
 
-    @SuppressWarnings("deprecation")
-    private Score getScoreItem(Objective obj, String name) {
-        if ( name.length() > 16 ) {
-            name = name.substring(0, 16);
+    public String fixName17(String name){
+        if ( name.length() > 17 ) {
+            return name.substring(0, 17);
         }
-        return obj.getScore(name);
+        return name;
     }
 
-    @SuppressWarnings("deprecation")
-    private void removeScores(String name) {
-        if ( name.length() > 16 ) {
-            name = name.substring(0, 16);
-        }
-        scoreboard.resetScores(name);
-    }
-
-    public void setScoreItem(String name, int setNo) {
-        sidebar.getScore(name).setScore(setNo);
-    }
-
-    public String getHostplayer() {
-        return hostplayer;
+    public String getHostPlayerName() {
+        return hostPlayerName;
     }
 
     public boolean isInGame() {
@@ -140,19 +211,33 @@ public class GameMaker implements Runnable {
         return false;
     }
 
-    public boolean cancel() {
-        cancel = true;
-        if (future != null) {
-            future.cancel(true);
-            future = null;
-
-            return true;
+    public void release(){
+        if(scoreboard != null){
+            if(sidebar!=null){
+                sidebar.unregister();
+            }
+            scoreboard.getTeams().stream().forEach(team -> team.unregister());
         }
-        return false;
+    }
+
+    public boolean cancel() {
+        try {
+            cancel = true;
+            if (future != null) {
+                future.cancel(true);
+                future = null;
+
+                return true;
+            }
+            return false;
+        }finally {
+            //release();
+        }
     }
 
     public void finish() {
         cancel();
+        release();
 
         players.stream().forEach(playerName->{
             scoreboard.resetScores(playerName);
@@ -162,24 +247,28 @@ public class GameMaker implements Runnable {
                 sendMessage(player.getName(), "&6ゲームを解散しました");
             }
         });
-        if(!isJoining(hostplayer)){
-            sendMessage(hostplayer, "&6ゲームを解散しました");
+        if(!isJoining(hostPlayerName)){
+            sendMessage(hostPlayerName, "&6ゲームを解散しました");
         }
     }
 
 
     public void start(ExecutorService pool) {
+        //スコアのリセット
+        scoreboard.getEntries().stream().forEach(e->sidebar.getScore(e).setScore(0));
+
         this.future = pool.submit(this);
         showTitle("ゲームスタート！", "");
     }
 
     public void end() {
         showTitle("ゲーム終了", "");
-        finish();
+        this.future = null;
+        //finish();
     }
 
     public void gather() {
-        Player host = Bukkit.getPlayerExact(hostplayer);
+        Player host = Bukkit.getPlayerExact(hostPlayerName);
         Location l = host.getLocation();
         for (String p : players) {
             Player player = Bukkit.getPlayerExact(p);
@@ -197,8 +286,8 @@ public class GameMaker implements Runnable {
             }
         }
         //ホストにも通知する
-        if (!players.contains(hostplayer)) {
-            Player player = Bukkit.getPlayerExact(hostplayer);
+        if (!players.contains(hostPlayerName)) {
+            Player player = Bukkit.getPlayerExact(hostPlayerName);
             if (player != null) {
                 titleSender.sendTitle(player, "§b" + title, "§3" + subtitle, "");
             }
@@ -231,7 +320,7 @@ public class GameMaker implements Runnable {
                 if (time>0 && distance >= TIME_SPAN) {
                     //終了処理
                     end();
-                    gameCommandExecutor.remove(hostplayer);
+                    //gameCommandExecutor.remove(hostPlayerName);
                     break;
                 }
 
@@ -240,7 +329,7 @@ public class GameMaker implements Runnable {
                 Thread.sleep(1000);
             }
         } catch (InterruptedException e) {
-            logger.info("Interrupted - "
+            LOGGER.info("Interrupted - "
                     + Thread.currentThread().getId());
         }
     }

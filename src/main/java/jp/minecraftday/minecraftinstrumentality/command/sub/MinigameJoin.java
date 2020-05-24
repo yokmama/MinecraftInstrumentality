@@ -6,12 +6,15 @@ import jp.minecraftday.minecraftinstrumentality.core.SubCommand;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MinigameJoin implements SubCommand {
     GameCommandExecutor executor;
@@ -38,13 +41,15 @@ public class MinigameJoin implements SubCommand {
 
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        List<String> list = GameCommandExecutor.getGames();
-        if (args[0].length() == 0) {
-            return list;
+        if(args.length == 0 || args[0].length() == 0) {
+            return executor.getGames();
         } else if (args.length == 1) {
-            for (String s : list) {
-                if (s.startsWith(args[0])) return Collections.singletonList(s);
-            }
+            return executor.getGames().stream().filter(s->s.startsWith(args[0])).collect(Collectors.toList());
+        }
+        if(args.length == 1 || args[1].length() == 0) {
+            return Arrays.stream(GameMaker.teamColors).map(chatColor -> chatColor.name()).collect(Collectors.toList());
+        } else if (args.length == 2) {
+            return Arrays.stream(GameMaker.teamColors).map(chatColor -> chatColor.name()).filter(s->s.startsWith(args[1])).collect(Collectors.toList());
         }
         return new ArrayList<>();
     }
@@ -55,6 +60,10 @@ public class MinigameJoin implements SubCommand {
         }
 
         String gameID = args[0];
+        String teamName = null;
+        if(args.length > 1) {
+            teamName = args[1];
+        }
 
         GameMaker gameMaker = executor.getGameMaker(gameID);
         if (gameMaker == null || gameMaker.isInGame()) {
@@ -62,30 +71,33 @@ public class MinigameJoin implements SubCommand {
             return true;
         }
 
-        if((gameMaker.getPlayers().size()+1)>gameMaker.getMaxPlayer()){
-            player.sendMessage("そのゲームはすでに定員オーバーです");
-            return true;
-        }
-
         GameMaker hostingGame = executor.getGameMaker(player.getName());
-        if (hostingGame != null && !hostingGame.getHostplayer().equals(gameMaker.getHostplayer())) {
+        if (hostingGame != null && !hostingGame.getHostPlayerName().equals(gameMaker.getHostPlayerName())) {
             if(hostingGame.getPlayers().size()>0){
                 player.sendMessage("ゲームの作成者は他のゲームには参加できません");
                 return true;
             }else {
+                //参加しているプレイヤーがいないので、自分のゲームを終了して参加させることにする
                 hostingGame.finish();
             }
         }
 
+        if(!gameMaker.isJoining(player.getName())){
+            //新規にゲームに参加する場合は定員チェックを行う
+            if((gameMaker.getPlayers().size()+1)>gameMaker.getMaxPlayer()){
+                player.sendMessage("そのゲームはすでに定員オーバーです");
+                return true;
+            }
+        }
 
         GameMaker ogm = executor.getJoiningGame(player.getName());
         if (ogm != null) {
             ogm.removePlayer((Player)player);
         }
 
-        gameMaker.addPlayer((Player)player);
+        gameMaker.addPlayer((Player)player, teamName);
 
-        gameMaker.sendMessage(gameMaker.getHostplayer(), "&c" + player.getName() + "&6がゲームに参加しました");
+        gameMaker.sendMessage(gameMaker.getHostPlayerName(), "&c" + player.getName() + "&6がゲームに参加しました");
         gameMaker.sendMessage(player.getName(), "&6ゲームに参加しました");
 
         return true;

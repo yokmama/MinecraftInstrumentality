@@ -17,13 +17,9 @@ commands:
   minigame:
     description: mini game
     aliases: mg
-    usage: "Usage: /<command> [set|start|add|kick|list|cancel|join|gather|finish]"
+    usage: "Usage: /<command> [set|join]"
     permission: minecraftday.mg
     permission-message: You dont't have <permission>
-  minigame gather:
-    description: gather players
-    permission: minecraftday.mg.gather
-    usage: "Usage: /<command>"
   setitem:
     usage: "Usage: /<command> [name|lore]"
     permission: minecraftday.setitem
@@ -31,14 +27,6 @@ commands:
   vote:
     usage: "Usage: /<command> [day|night|sun|rain|jail|unjail|mute|ummute|yes|no]"
     permission: minecraftday.vote
-    permission-message: You dont't have <permission>
-  vote jail:
-    usage: "Usage: /<command> jail"
-    permission: minecraftday.vote.jail
-    permission-message: You dont't have <permission>
-  vote mute:
-    usage: "Usage: /<command> mute"
-    permission: minecraftday.vote.mute
     permission-message: You dont't have <permission>
   voteyes:
     usage: "Usage: /<command>"

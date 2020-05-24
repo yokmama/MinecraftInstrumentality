@@ -23,8 +23,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class Main extends MainPlugin implements Listener {
@@ -35,6 +34,7 @@ public final class Main extends MainPlugin implements Listener {
     private JavaPlugin essentials = null;
     private JavaPlugin multiverseCore = null;
     private JavaPlugin worldEdit = null;
+    private NgMatcher ngMatcher;
 
     public JavaPlugin getEssentials(){ return essentials;}
 
@@ -70,7 +70,6 @@ public final class Main extends MainPlugin implements Listener {
             this.worldEdit = (JavaPlugin) worldEdit;
         }
 
-
         //イベントリスナー登録
         getServer().getPluginManager().registerEvents(this, this);
         getServer().getPluginManager().registerEvents(new BasicIncome(this), this);
@@ -88,6 +87,9 @@ public final class Main extends MainPlugin implements Listener {
         getCommand("hiragana").setExecutor(chat);
         getCommand("shout").setExecutor(chat);
         getCommand("estate").setExecutor(new EstateCommandExecutor(this));
+
+
+        ngMatcher = new NgMatcher(getConfig().getStringList("ng.words").toArray(new String[0]));
 
         saveDefaultConfig();
     }
@@ -109,7 +111,8 @@ public final class Main extends MainPlugin implements Listener {
         event.getPlayer().sendMessage(I18n.tl("message.md.welcome1"));
         StringBuilder buf = new StringBuilder();
         buf.append("tellraw ").append(event.getPlayer().getName()).append(" ").append(msg);
-        event.getPlayer().performCommand(buf.toString());
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), buf.toString());
+//        event.getPlayer().performCommand(buf.toString());
         event.getPlayer().sendMessage(I18n.tl("message.md.welcome2"));
 
         gameCommandExecutor.onLogin(event.getPlayer());
@@ -132,80 +135,136 @@ public final class Main extends MainPlugin implements Listener {
     }
 
     public void broadcastMessage(Player sender, String msg, boolean isShout) {
-        Configuration configuration = getUserConfiguration(sender);
-        boolean hiragana = configuration!=null?configuration.getBoolean("hiragana"): false;
-        if (hiragana) {
-            msg = new KanaConverter().convert(msg);
+        Configuration userConfiguration = getUserConfiguration(sender);
+
+        boolean skipJapanize = false;
+        if ( msg.startsWith("#") ) {
+            skipJapanize = true;
+            msg = msg.substring("#".length());
         }
+
+        if(!skipJapanize) {
+            //ひらがな処理
+            boolean hiragana = userConfiguration != null ? userConfiguration.getBoolean("hiragana") : false;
+            if (hiragana) {
+                msg = new KanaConverter().convert(msg);
+            }
+        }
+
+        final int cooldown = getConfig().getInt("ng.cooldown");
+        final int maxtime = getConfig().getInt("ng.maxtime");
+
+        long ngtime = userConfiguration.getLong("ng.time");
+        int ngcount = userConfiguration.getInt("ng.count");
+        if(ngtime>0){
+            long sec = new Double(Math.pow(cooldown, ngcount)).longValue();
+            if(sec>maxtime) sec = maxtime;
+            long now = Calendar.getInstance().getTimeInMillis();
+            long limitTime = ngtime + sec*1000;
+            if(now < limitTime){
+                sender.sendMessage(I18n.tl("message.md.ngword.mute"));
+                return;
+            } else {
+                userConfiguration.set("ng.time", 0);
+                userConfiguration.save();
+            }
+        }
+
+        //NGワードチェック
+        String[] msgs = msg.split(" ");
+        for(int i=0; i<msgs.length; i++) {
+            if(ngMatcher.match(msgs[i])){
+                if(ngMatcher.getState() == 1){
+                    //完全一致は問答無用でMute
+                    long sec = new Double(Math.pow(cooldown, ngcount)).longValue();
+                    if (sec > maxtime) sec = maxtime;
+                    long now = Calendar.getInstance().getTimeInMillis();
+                    long limitTime = now + sec * 1000 * 2;
+
+                    sender.sendMessage(I18n.tl("message.md.ngword.detect"));
+                    userConfiguration.set("ng.time", now);
+                    if (now < limitTime) {
+                        userConfiguration.set("ng.count", ngcount + 1);
+                    } else {
+                        userConfiguration.set("ng.count", 1);
+                    }
+                    userConfiguration.save();
+                    return;
+                }else{
+                    //含んでいる場合はマスク
+                    msg = ngMatcher.getMaskString(msg);
+                }
+            }
+        }
+        /*
+        List<String> ngwords = getConfig().getStringList("ng.words");
+        for(Iterator<String> ite = ngwords.iterator(); ite.hasNext();){
+            String ngword = ite.next();
+            if(msg.contains(ngword)){
+                //
+                long sec = new Double(Math.pow(cooldown, ngcount)).longValue();
+                if(sec>maxtime) sec = maxtime;
+                long now = Calendar.getInstance().getTimeInMillis();
+                long limitTime = now + sec*1000*2;
+
+                sender.sendMessage(I18n.tl("message.md.ngword.detect"));
+                userConfiguration.set("ng.time", now);
+                if(now < limitTime) {
+                    userConfiguration.set("ng.count", ngcount+1);
+                }else{
+                    userConfiguration.set("ng.count", 1);
+                }
+                userConfiguration.save();
+                return;
+            }
+        }*/
+
+
+
 
         String color = "&f";
         final Collection<? extends Player> players;
         if (essentials != null) color = new EssentialsHandler(essentials).getChatColor(sender);
-        if(isShout) {
+        if (isShout) {
             color = "&c";
             players = null;//Bukkit.getOnlinePlayers();
         } else {
             final GameMaker hostGame = gameCommandExecutor.getGameMaker(sender.getName());
             final GameMaker joinGame = gameCommandExecutor.getJoiningGame(sender.getName());
-            if(hostGame != null){
+            if (hostGame != null) {
                 color = "&a";
             }
 
-            players = Bukkit.getOnlinePlayers().stream().filter(pl->{
+            players = Bukkit.getOnlinePlayers().stream().filter(pl -> {
                 if (sender.getName().equals(pl.getName())) return true;
                 else if (joinGame != null) return joinGame.isJoining(pl.getName());
-                else if (hostGame!=null) return hostGame.isJoining(pl.getName()) || gameCommandExecutor.getJoiningGame(pl.getName()) == null;
+                else if (hostGame != null)
+                    return hostGame.isJoining(pl.getName()) || gameCommandExecutor.getJoiningGame(pl.getName()) == null;
                 else return gameCommandExecutor.getJoiningGame(pl.getName()) == null;
             }).collect(Collectors.toList());
         }
 
-        boolean useRaw = false; //ホバーで名前を表示するメッセージは一度やってみたけど微妙だったのでフラグでオフにしています
-        final String fixedMsg;
-        if(useRaw){
-            //ex: Gm yokmama »
-            TextRawGenerator builder = new TextRawGenerator();
-            if (essentials != null) {
-                builder.append(new EssentialsHandler(essentials).getPrefix(sender) + " ", true);
-            }
-            builder.append(sender.getDisplayName(), true, sender.getName());
-            builder.append(color+">");
-            builder.append(msg);
-            fixedMsg = builder.toString();
-        }else {
-            StringBuilder builder = new StringBuilder();
+        StringBuilder builder = new StringBuilder();
 
-            if (essentials != null) {
-                builder.append(new EssentialsHandler(essentials).getPrefix(sender) + " ");
-            }
-            builder.append(sender.getDisplayName());
-            builder.append(color+">");
-            builder.append(msg);
-            fixedMsg = ChatColor.translateAlternateColorCodes('&',builder.toString());
+        if (essentials != null) {
+            builder.append(new EssentialsHandler(essentials).getPrefix(sender) + " ");
         }
+        builder.append(sender.getDisplayName());
+        builder.append(color + ">");
+        builder.append(msg);
+        final String fixedMsg = ChatColor.translateAlternateColorCodes('&', builder.toString());
 
-        if(players != null) {
+        if (players != null) {
             players.forEach(p -> {
-                if (useRaw) {
-                    StringBuilder buf = new StringBuilder();
-                    buf.append("tellraw ").append(p.getName()).append(" ").append(fixedMsg);
-                    Threading.postToServerThread(new Threading.Task(this) {
-                        @Override
-                        public void execute() {
-                            p.performCommand(buf.toString());
-                        }
-                    });
-                } else {
-                    p.sendMessage(fixedMsg);
-                }
+                p.sendMessage(fixedMsg);
             });
-        }else{
+        } else {
             Bukkit.broadcastMessage(fixedMsg);
         }
 
         if (discordSRV != null) {
             new DiscordSRVHandler(discordSRV).processChatMessage(sender, msg, false);
         }
-
     }
 
     public Boolean isMuted(Player player) {

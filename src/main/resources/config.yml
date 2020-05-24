@@ -10,3 +10,10 @@ vote:
 #毎月定額で入金されるお金
 basicincome:
   money: 5000
+#毎月定額で入金されるお金
+ng:
+  cooldown: 15
+  maxtime: 3600
+  words:
+    - しね
+    - 死ね

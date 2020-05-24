@@ -4,11 +4,8 @@ import jp.minecraftday.minecraftinstrumentality.GameMaker;
 import jp.minecraftday.minecraftinstrumentality.Main;
 import jp.minecraftday.minecraftinstrumentality.command.sub.*;
 import jp.minecraftday.minecraftinstrumentality.core.MainCommandExecutor;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.TabExecutor;
 import org.bukkit.entity.Player;
 
 import java.util.*;
@@ -21,10 +18,10 @@ import java.util.stream.Collectors;
 public class GameCommandExecutor extends MainCommandExecutor {
     static AtomicInteger ids = new AtomicInteger();
     final ExecutorService pool;
-    static Map<String, GameMaker> games = new ConcurrentHashMap<>();
+    Map<String, GameMaker> games = new ConcurrentHashMap<>();
 
-    public static List<String> getGames(){
-        return games.values().stream().map(g->g.getHostplayer()).collect(Collectors.toList());
+    public List<String> getGames(){
+        return games.values().stream().map(g->g.getHostPlayerName()).collect(Collectors.toList());
     }
 
     public GameCommandExecutor(Main ref) {
@@ -36,14 +33,19 @@ public class GameCommandExecutor extends MainCommandExecutor {
             return thread;
         });
 
-        addSubCommand(new MinigameSet(this));
+        addSubCommand(new MinigameCreate(this));
         addSubCommand(new MinigameJoin(this));
-        addSubCommand(new MinigameFinish(this));
-        addSubCommand(new MinigameAdd(this));
+        addSubCommand(new MinigameLeave(this));
+        addSubCommand(new MinigameDisband(this));
+        addSubCommand(new MinigameForceJoin(this));
         addSubCommand(new MinigameKick(this));
         addSubCommand(new MinigameList(this));
         addSubCommand(new MinigameStart(this));
         addSubCommand(new MinigameGather(this));
+        addSubCommand(new MinigameTeam(this));
+        addSubCommand(new MinigameTime(this));
+        addSubCommand(new MinigameCapacity(this));
+        addSubCommand(new MinigameCancel(this));
     }
 
     @Override
@@ -59,19 +61,45 @@ public class GameCommandExecutor extends MainCommandExecutor {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         GameMaker hostingGame = getGameMaker(sender.getName());
+        GameMaker gameMaker = getJoiningGame(sender.getName());
         if (hostingGame != null) {
             List<String> list = super.onTabComplete(sender, command, alias, args);
             if (hostingGame.isInGame()) {
+                list.remove("time");
+                list.remove("forcejoin");
+                list.remove("capacity");
+            } else {
                 list.remove("cancel");
             }
-            GameMaker gameMaker = getJoiningGame(sender.getName());
             if (gameMaker == null && hostingGame != null) {
                 list.remove("list");
+                list.remove("leave");
             }
 
+            if(args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if (args.length == 1) {
+                return list.stream().filter(s->s.startsWith(args[0])).collect(Collectors.toList());
+            }
             return list;
-        } else if( args.length == 1){
-            return Arrays.asList("set");
+        } else if(gameMaker!=null){
+            List<String> list = Arrays.asList("join", "leave", "team", "list", "leave");
+            if (gameMaker.isInGame()) {
+                list.remove("team");
+            }
+
+            if(args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if (args.length == 1) {
+                return list.stream().filter(s->s.startsWith(args[0])).collect(Collectors.toList());
+            }
+        } else {
+            List<String> list = Arrays.asList("create", "join");
+            if(args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if (args.length == 1) {
+                return list.stream().filter(s->s.startsWith(args[0])).collect(Collectors.toList());
+            }
         }
 
         return super.onTabComplete(sender, command, alias, args);

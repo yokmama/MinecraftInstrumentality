@@ -41,7 +41,12 @@ public class MinigameKick implements SubCommand {
         GameMaker gameMaker = executor.getJoiningGame(sender.getName());
         if(gameMaker == null) gameMaker = executor.getGameMaker(sender.getName());
         if(gameMaker!=null){
-            return gameMaker.getPlayers().stream().collect(Collectors.toList());
+            List<String> list = gameMaker.getPlayers().stream().collect(Collectors.toList());
+            if(args.length == 0 || args[0].length() == 0) {
+                return list;
+            } else if (args.length == 1) {
+                return list.stream().filter(s->s.startsWith(args[0])).collect(Collectors.toList());
+            }
         }
 
         return new ArrayList<>();
