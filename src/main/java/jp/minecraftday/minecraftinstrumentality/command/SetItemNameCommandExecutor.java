@@ -1,6 +1,8 @@
 package jp.minecraftday.minecraftinstrumentality.command;
 
 import jp.minecraftday.minecraftinstrumentality.Main;
+import jp.minecraftday.minecraftinstrumentality.core.utils.I18n;
+import jp.minecraftday.minecraftinstrumentality.utils.DesignMark;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -26,16 +28,28 @@ public class SetItemNameCommandExecutor implements CommandExecutor, TabExecutor 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("setitem") && args.length > 0 && sender instanceof Player) {
-            String cmd0 = args[0].toLowerCase();
-            if (cmd0.equals("name")) {
-                setName((Player) sender, Arrays.copyOfRange(args, 1, args.length));
-            } else if (cmd0.equals("lore")) {
-                setLore((Player) sender, Arrays.copyOfRange(args, 1, args.length));
+            Player player = (Player)sender;
+            ItemStack itemStack = player.getInventory().getItemInMainHand();
+            if (itemStack != null && !itemStack.getType().isAir()) {
+                DesignMark designMark = plugin.getDesignMark();
+                String key = designMark.getDesiginedMark(plugin, itemStack);
+                if (key != null) {
+                    player.sendMessage(I18n.tl("message.setname.registered"));
+                }
+                else {
+                    String cmd0 = args[0].toLowerCase();
+                    if (cmd0.equals("name")) {
+                        setName(player, itemStack, Arrays.copyOfRange(args, 1, args.length));
+                    } else if (cmd0.equals("lore")) {
+                        setLore(itemStack, Arrays.copyOfRange(args, 1, args.length));
+                    }
+                }
+            }else{
+                player.sendMessage(I18n.tl("message.setname.noitem"));
             }
-
-            return true;
         }
-        return false;
+
+        return true;
     }
 
     @Override
@@ -51,10 +65,10 @@ public class SetItemNameCommandExecutor implements CommandExecutor, TabExecutor 
                 }
             }
         }
-        return null;
+        return new ArrayList<>();
     }
 
-    private void setName(Player player, String[] args) {
+    private void setName(Player player, ItemStack itemStack, String[] args) {
         StringBuilder builder = new StringBuilder();
         if (args != null && args.length > 0) {
             Arrays.stream(args).forEach(s -> {
@@ -63,24 +77,25 @@ public class SetItemNameCommandExecutor implements CommandExecutor, TabExecutor 
             });
         }
 
-        ItemStack itemStack = player.getInventory().getItemInMainHand();
-        if (itemStack != null && !itemStack.getType().isAir()) {
-            if (builder.length() > 0) {
-                ItemMeta meta = itemStack.getItemMeta();
-                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', builder.toString()));
-                itemStack.setItemMeta(meta);
-            } else {
-                ItemMeta deafultMeta = Bukkit.getItemFactory().getItemMeta(itemStack.getType());
-                ItemMeta meta = itemStack.getItemMeta();
-                meta.setDisplayName(deafultMeta.getDisplayName());
-                itemStack.setItemMeta(meta);
+        if (builder.length() > 0) {
+            String name = builder.toString();
+            if(name.length()>64){
+                name = name.substring(0, 64) + "~";
+                player.sendMessage(I18n.tl("message.setname.toomuchname"));
             }
+
+            ItemMeta meta = itemStack.getItemMeta();
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', name));
+            itemStack.setItemMeta(meta);
         } else {
-            player.sendMessage("アイテムをもっていません");
+            ItemMeta deafultMeta = Bukkit.getItemFactory().getItemMeta(itemStack.getType());
+            ItemMeta meta = itemStack.getItemMeta();
+            meta.setDisplayName(deafultMeta.getDisplayName());
+            itemStack.setItemMeta(meta);
         }
     }
 
-    private void setLore(Player player, String[] args) {
+    private void setLore(ItemStack itemStack, String[] args) {
         List<String> list = new ArrayList<>();
         if (args != null && args.length > 0) {
             Arrays.stream(args).forEach(s -> {
@@ -88,20 +103,15 @@ public class SetItemNameCommandExecutor implements CommandExecutor, TabExecutor 
             });
         }
 
-        ItemStack itemStack = player.getInventory().getItemInMainHand();
-        if (itemStack != null && !itemStack.getType().isAir()) {
-            if (list.size() > 0) {
-                ItemMeta meta = itemStack.getItemMeta();
-                meta.setLore(list);
-                itemStack.setItemMeta(meta);
-            } else {
-                ItemMeta deafultMeta = Bukkit.getItemFactory().getItemMeta(itemStack.getType());
-                ItemMeta meta = itemStack.getItemMeta();
-                meta.setLore(deafultMeta.getLore());
-                itemStack.setItemMeta(meta);
-            }
+        if (list.size() > 0) {
+            ItemMeta meta = itemStack.getItemMeta();
+            meta.setLore(list);
+            itemStack.setItemMeta(meta);
         } else {
-            player.sendMessage("アイテムをもっていません");
+            ItemMeta deafultMeta = Bukkit.getItemFactory().getItemMeta(itemStack.getType());
+            ItemMeta meta = itemStack.getItemMeta();
+            meta.setLore(deafultMeta.getLore());
+            itemStack.setItemMeta(meta);
         }
     }
 

@@ -23,6 +23,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,11 +36,14 @@ public final class Main extends MainPlugin implements Listener {
     private JavaPlugin multiverseCore = null;
     private JavaPlugin worldEdit = null;
     private NgMatcher ngMatcher;
+    private DesignMark designMark;
 
     public JavaPlugin getEssentials(){ return essentials;}
 
     public JavaPlugin getMultiverseCore(){ return multiverseCore;}
     public JavaPlugin getWorldEdit(){ return worldEdit;}
+
+    public DesignMark getDesignMark(){ return designMark;}
 
     @Override
     public void onEnable() {
@@ -48,6 +52,8 @@ public final class Main extends MainPlugin implements Listener {
         gameCommandExecutor = new GameCommandExecutor(this);
 
         userConfiguration = new UserConfiguration(getDataFolder());
+
+        designMark = new DesignMark(new File(getDataFolder(), "designs.yml"));
 
         final PluginManager pluginManager = getServer().getPluginManager();
         Plugin ess = pluginManager.getPlugin("Essentials");
@@ -87,6 +93,8 @@ public final class Main extends MainPlugin implements Listener {
         getCommand("hiragana").setExecutor(chat);
         getCommand("shout").setExecutor(chat);
         getCommand("estate").setExecutor(new EstateCommandExecutor(this));
+
+        getCommand("designmark").setExecutor(new DesignMarkCommandExecutor(this));
 
 
         ngMatcher = new NgMatcher(getConfig().getStringList("ng.words").toArray(new String[0]));

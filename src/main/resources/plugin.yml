@@ -53,6 +53,11 @@ commands:
     usage: "Usage: /<command>"
     permission: minecraftday.estate
     permission-message: You dont't have <permission>
+  designmark:
+    usage: "Usage: /<command>"
+    aliases: design
+    permission: minecraftday.designmark
+    permission-message: You dont't have <permission>
 permissions:
   minecraftday.md:
     description: server settings permission
@@ -93,3 +98,6 @@ permissions:
   minecraftday.estate:
     description: estate command permission
     default: op
+  minecraftday.designmark:
+    description: designmark command permission
+    default: true
