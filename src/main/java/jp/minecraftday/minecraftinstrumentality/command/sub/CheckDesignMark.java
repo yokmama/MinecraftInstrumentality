@@ -4,7 +4,7 @@ import jp.minecraftday.minecraftinstrumentality.Main;
 import jp.minecraftday.minecraftinstrumentality.core.MainPlugin;
 import jp.minecraftday.minecraftinstrumentality.core.SubCommand;
 import jp.minecraftday.minecraftinstrumentality.core.utils.I18n;
-import jp.minecraftday.minecraftinstrumentality.utils.DesignMark;
+import jp.minecraftday.minecraftinstrumentality.utils.DesignMarkDatabase;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -36,15 +36,18 @@ public class CheckDesignMark implements SubCommand {
         Player player = (Player)sender;
         ItemStack itemStack = player.getInventory().getItemInMainHand();
         if (itemStack != null && !itemStack.getType().isAir()) {
-            DesignMark designMark = ((Main)plugin).getDesignMark();
-            String key = designMark.getDesiginedMark(plugin, itemStack);
+            DesignMarkDatabase designMarkDb = ((Main)plugin).getDesignMarkDb();
+            String key = designMarkDb.getDesiginedMarkID(plugin, itemStack);
             if(key==null){
                 player.sendMessage(I18n.tl("message.register.unregistered"));
             }else{
-                if(designMark.checkDesignMark(player, plugin, itemStack)){
-                    List<String> list = designMark.getDesignMark(plugin, itemStack);
-                    String crafted = list.get(0).substring("crafted:".length());
-                    player.sendMessage(I18n.tl("message.designcheck.fine", crafted));
+                if(designMarkDb.checkDesignMark(plugin, itemStack)){
+                    String designer = designMarkDb.getDesigner(key);
+                    if(designer!=null) {
+                        player.sendMessage(I18n.tl("message.designcheck.fine", designer));
+                    }else{
+                        player.sendMessage(I18n.tl("message.designcheck.error"));
+                    }
                 }else{
                     player.sendMessage(I18n.tl("message.designcheck.error"));
                 }

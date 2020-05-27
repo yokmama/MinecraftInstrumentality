@@ -2,7 +2,7 @@ package jp.minecraftday.minecraftinstrumentality.command;
 
 import jp.minecraftday.minecraftinstrumentality.Main;
 import jp.minecraftday.minecraftinstrumentality.core.utils.I18n;
-import jp.minecraftday.minecraftinstrumentality.utils.DesignMark;
+import jp.minecraftday.minecraftinstrumentality.utils.DesignMarkDatabase;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -31,8 +31,8 @@ public class SetItemNameCommandExecutor implements CommandExecutor, TabExecutor 
             Player player = (Player)sender;
             ItemStack itemStack = player.getInventory().getItemInMainHand();
             if (itemStack != null && !itemStack.getType().isAir()) {
-                DesignMark designMark = plugin.getDesignMark();
-                String key = designMark.getDesiginedMark(plugin, itemStack);
+                DesignMarkDatabase designMarkDb = plugin.getDesignMarkDb();
+                String key = designMarkDb.getDesiginedMarkID(plugin, itemStack);
                 if (key != null) {
                     player.sendMessage(I18n.tl("message.setname.registered"));
                 }

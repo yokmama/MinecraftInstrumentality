@@ -4,7 +4,7 @@ import jp.minecraftday.minecraftinstrumentality.Main;
 import jp.minecraftday.minecraftinstrumentality.core.MainPlugin;
 import jp.minecraftday.minecraftinstrumentality.core.SubCommand;
 import jp.minecraftday.minecraftinstrumentality.core.utils.I18n;
-import jp.minecraftday.minecraftinstrumentality.utils.DesignMark;
+import jp.minecraftday.minecraftinstrumentality.utils.DesignMarkDatabase;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -47,13 +47,20 @@ public class RegisterDesignMark implements SubCommand {
                 return true;
             }
 
-            DesignMark designMark = ((Main)plugin).getDesignMark();
-            String key = designMark.getDesiginedMark(plugin, itemStack);
+            DesignMarkDatabase designMarkDb = ((Main)plugin).getDesignMarkDb();
+            String key = designMarkDb.getDesiginedMarkID(plugin, itemStack);
             if(key!=null){
                 player.sendMessage(I18n.tl("message.register.registered"));
             }else{
-                designMark.registrationDesign(player, plugin, itemStack);
-                player.sendMessage(I18n.tl("message.register.completion"));
+                if(designMarkDb.checkName(itemStack)) {
+                    if(designMarkDb.registrationDesign(player, plugin, itemStack) != null) {
+                        player.sendMessage(I18n.tl("message.register.completion"));
+                    }else{
+                        player.sendMessage(I18n.tl("message.register.error"));
+                    }
+                }else{
+                    player.sendMessage(I18n.tl("message.designcheck.usedname"));
+                }
             }
         } else {
             player.sendMessage(I18n.tl("message.register.noitem"));

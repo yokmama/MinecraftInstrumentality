@@ -23,7 +23,6 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,14 +35,14 @@ public final class Main extends MainPlugin implements Listener {
     private JavaPlugin multiverseCore = null;
     private JavaPlugin worldEdit = null;
     private NgMatcher ngMatcher;
-    private DesignMark designMark;
+    private DesignMarkDatabase designMarkDb;
 
     public JavaPlugin getEssentials(){ return essentials;}
 
     public JavaPlugin getMultiverseCore(){ return multiverseCore;}
     public JavaPlugin getWorldEdit(){ return worldEdit;}
 
-    public DesignMark getDesignMark(){ return designMark;}
+    public DesignMarkDatabase getDesignMarkDb(){ return designMarkDb;}
 
     @Override
     public void onEnable() {
@@ -53,7 +52,8 @@ public final class Main extends MainPlugin implements Listener {
 
         userConfiguration = new UserConfiguration(getDataFolder());
 
-        designMark = new DesignMark(new File(getDataFolder(), "designs.yml"));
+        designMarkDb = new DesignMarkDatabase(this);
+        designMarkDb.connect();
 
         final PluginManager pluginManager = getServer().getPluginManager();
         Plugin ess = pluginManager.getPlugin("Essentials");
@@ -109,6 +109,8 @@ public final class Main extends MainPlugin implements Listener {
     @Override
     public void onDisable() {
         super.onDisable();
+
+        designMarkDb.disconnect();
     }
 
     @EventHandler
