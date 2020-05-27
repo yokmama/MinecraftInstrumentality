@@ -36,7 +36,6 @@ public class EstateCommandExecutor implements CommandExecutor, TabExecutor {
         String subCommand = args[0];
         if(subCommand.equalsIgnoreCase("price")) {
 
-            if(plugin.getMultiverseCore() == null) return false;
             if(plugin.getWorldEdit() == null) return false;
 
             WorldEditHandler worldEditHandler =  new WorldEditHandler(plugin.getWorldEdit());
@@ -48,7 +47,6 @@ public class EstateCommandExecutor implements CommandExecutor, TabExecutor {
                         .getBlockVector();
 
                 Region region = worldEditHandler.getSelection((Player) sender);
-                //Location spawn = multiverseHandler.getSpawnPosition(((Player) sender).getWorld().getName());
                 BlockVector center = region.getCenter();
                 int a = center.getBlockX() - base.getBlockX();
                 int b = center.getBlockZ() - base.getBlockZ();

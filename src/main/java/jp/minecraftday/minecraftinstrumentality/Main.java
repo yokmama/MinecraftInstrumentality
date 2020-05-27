@@ -8,6 +8,9 @@ import jp.minecraftday.minecraftinstrumentality.plugin.DiscordSRVHandler;
 import jp.minecraftday.minecraftinstrumentality.plugin.EssentialsHandler;
 import jp.minecraftday.minecraftinstrumentality.plugin.MultiverseHandler;
 import jp.minecraftday.minecraftinstrumentality.utils.*;
+import net.milkbowl.vault.chat.Chat;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -21,6 +24,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -32,14 +36,16 @@ public final class Main extends MainPlugin implements Listener {
 
     private JavaPlugin discordSRV = null;
     private JavaPlugin essentials = null;
-    private JavaPlugin multiverseCore = null;
     private JavaPlugin worldEdit = null;
     private NgMatcher ngMatcher;
     private DesignMarkDatabase designMarkDb;
 
-    public JavaPlugin getEssentials(){ return essentials;}
+    private Economy econ = null;
+    private Permission perms = null;
+    private Chat chat = null;
 
-    public JavaPlugin getMultiverseCore(){ return multiverseCore;}
+
+
     public JavaPlugin getWorldEdit(){ return worldEdit;}
 
     public DesignMarkDatabase getDesignMarkDb(){ return designMarkDb;}
@@ -48,6 +54,16 @@ public final class Main extends MainPlugin implements Listener {
     public void onEnable() {
         super.onEnable();
 
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            LOGGER.severe(String.format("[%s] - Disabled due to no Vault dependency found!", getDescription().getName()));
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
+
+        setupEconomy();
+        setupPermissions();
+        setupChat();
+
         gameCommandExecutor = new GameCommandExecutor(this);
 
         userConfiguration = new UserConfiguration(getDataFolder());
@@ -55,7 +71,9 @@ public final class Main extends MainPlugin implements Listener {
         designMarkDb = new DesignMarkDatabase(this);
         designMarkDb.connect();
 
+
         final PluginManager pluginManager = getServer().getPluginManager();
+
         Plugin ess = pluginManager.getPlugin("Essentials");
         if (ess != null){// && ess.isEnabled()) {
             this.essentials = (JavaPlugin) ess;
@@ -64,11 +82,6 @@ public final class Main extends MainPlugin implements Listener {
         Plugin srv = pluginManager.getPlugin("DiscordSRV");
         if (srv != null){// && srv.isEnabled()) {
             this.discordSRV = (JavaPlugin) srv;
-        }
-
-        Plugin core = pluginManager.getPlugin("Multiverse-Core");
-        if (core != null){// && multiverseCore.isEnabled()) {
-            this.multiverseCore = (JavaPlugin) core;
         }
 
         Plugin worldEdit = pluginManager.getPlugin("WorldEdit");
@@ -142,6 +155,33 @@ public final class Main extends MainPlugin implements Listener {
     public void onChat(AsyncPlayerChatEvent event) {
         event.setCancelled(true);
         broadcastMessage(event.getPlayer(), event.getMessage(), false);
+    }
+
+    private boolean setupEconomy() {
+        RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
+        if (rsp == null) {
+            return false;
+        }
+        econ = rsp.getProvider();
+        return econ != null;
+    }
+
+    private boolean setupChat() {
+        RegisteredServiceProvider<Chat> rsp = getServer().getServicesManager().getRegistration(Chat.class);
+        if (rsp == null) {
+            return false;
+        }
+        chat = rsp.getProvider();
+        return chat != null;
+    }
+
+    private boolean setupPermissions() {
+        RegisteredServiceProvider<Permission> rsp = getServer().getServicesManager().getRegistration(Permission.class);
+        if (rsp == null) {
+            return false;
+        }
+        perms = rsp.getProvider();
+        return perms != null;
     }
 
     public void broadcastMessage(Player sender, String msg, boolean isShout) {
@@ -287,9 +327,5 @@ public final class Main extends MainPlugin implements Listener {
         return null;
     }
 
-    public Location getSpawnLocation(Player player) {
-        if (multiverseCore != null) return new MultiverseHandler(multiverseCore).getSpawnPosition(player.getWorld().getName());
-        else return player.getWorld().getSpawnLocation();
-    }
-
+    public Economy getEcon(){ return econ;}
 }
